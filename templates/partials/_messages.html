@@ -1,0 +1,15 @@
+{% if messages %}
+<div class="my-4">
+    {% for message in messages %}
+    <div class="p-4 mb-4 text-sm rounded-lg 
+        {% if message.tags == 'debug' %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300{% endif %}
+        {% if message.tags == 'info' %}bg-blue-100 text-blue-800 dark:bg-blue-200 dark:text-blue-800{% endif %}
+        {% if message.tags == 'success' %}bg-green-100 text-green-800 dark:bg-green-200 dark:text-green-800{% endif %}
+        {% if message.tags == 'warning' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-200 dark:text-yellow-800{% endif %}
+        {% if message.tags == 'error' %}bg-red-100 text-red-800 dark:bg-red-200 dark:text-red-800{% endif %}
+        " role="alert">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

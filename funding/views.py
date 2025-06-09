@@ -1,0 +1,129 @@
+from django.shortcuts import render, redirect
+from django.urls import reverse_lazy
+from django.contrib import messages
+from django.views.generic import ListView, DetailView, CreateView
+# CreateView is imported twice, once from django.views.generic and once from .edit - keep one
+# from django.views.generic.edit import CreateView 
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+
+from accounts.models import CustomUser
+from .models import Campaign, Organisation
+from .forms import OrganisationApplicationForm, CampaignForm
+
+class CampaignListView(ListView):
+    model = Campaign
+    template_name = 'funding/home.html'  # Will be created later
+    context_object_name = 'campaigns'
+
+    def get_queryset(self):
+        return Campaign.objects.filter(status='active').order_by('-created_at')
+
+class CampaignDetailView(DetailView):
+    model = Campaign
+    template_name = 'funding/campaign_detail.html' # Will be created later
+    context_object_name = 'campaign'
+
+class OrganisationCreateView(CreateView):
+    model = Organisation
+    template_name = 'funding/organisation_form.html' # Will be created later
+    fields = ['name'] # 'verified' defaults to False, 'created_at' is auto_now_add
+    success_url = reverse_lazy('campaign_list') # Redirect to campaign list after successful creation
+
+    def form_valid(self, form):
+        # verified is False by default as per model definition
+        return super().form_valid(form)
+
+
+class OrganisationApplicationCreateView(UserPassesTestMixin, CreateView):
+    model = Organisation
+    form_class = OrganisationApplicationForm
+    template_name = 'funding/organisation_apply.html' # To be created
+    success_url = reverse_lazy('funding:campaign_list') # Redirect to campaign list
+    login_url = reverse_lazy('login') # Explicitly define login_url for LoginRequiredMixin
+
+    def test_func(self):
+        if not self.request.user.is_authenticated:
+            return True # Allow anonymous users to apply
+        # For authenticated users, check if they are already an org_owner or have an org
+        user = self.request.user
+        if isinstance(user, CustomUser):
+            return not (user.role == 'org_owner' and user.organisation is not None)
+        return True # Default to allow if not a CustomUser instance (should not happen with proper auth)
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            messages.info(self.request, "You are already associated with an organisation or have an application pending.")
+            return redirect('funding:campaign_list')
+        return super().handle_no_permission() # For unauthenticated, redirects to login_url
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        # verification_status defaults to 'pending' as per model definition.
+        # The 'verified' boolean field will be set by the model's save() method.
+        self.object.save() # Save the organisation first to get an ID
+
+        if self.request.user.is_authenticated and isinstance(self.request.user, CustomUser):
+            user = self.request.user
+            user.role = 'org_owner' # Directly use the string value for the role
+            user.organisation = self.object
+            user.save()
+            messages.success(self.request, 
+                             f'Thank you, {user.username}! Your organisation application for "{self.object.name}" has been submitted and is pending review. You have been assigned as the Organisation Owner.')
+        else:
+            messages.success(self.request, 
+                             f'Your organisation application for "{self.object.name}" has been submitted and is pending review.')
+        
+        return redirect(self.get_success_url()) # Use redirect after manual save and messages
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Apply for Organisation'
+        return context
+
+
+class CampaignCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    model = Campaign
+    form_class = CampaignForm
+    template_name = 'funding/campaign_form.html' # To be created
+    # success_url will be set in get_success_url or form_valid
+
+    def test_func(self):
+        user = self.request.user
+        return (
+            isinstance(user, CustomUser) and 
+            user.role == 'org_owner' and 
+            user.organisation is not None and 
+            user.organisation.verified  # Crucially, check if the organisation is verified
+        )
+
+    def get_form_kwargs(self):
+        """Hide the organisation field as it's set automatically."""
+        kwargs = super().get_form_kwargs()
+        # If the user's organisation is set, we can remove the field from the form
+        # or make it disabled. For now, we'll rely on form_valid to set it.
+        # To hide it, we would modify the form class or fields in get_form.
+        return kwargs
+
+    def get_initial(self):
+        """Pre-select the user's organisation if applicable."""
+        initial = super().get_initial()
+        if self.request.user.is_authenticated and isinstance(self.request.user, CustomUser) and self.request.user.organisation:
+            # The form's ModelChoiceField queryset already filters for verified orgs.
+            # If the user's org is verified, it will be a valid choice.
+            initial['organisation'] = self.request.user.organisation
+        return initial
+
+    def form_valid(self, form):
+        campaign = form.save(commit=False)
+        campaign.organisation = self.request.user.organisation # Assign user's verified org
+        # 'status' defaults to 'pending' as per Campaign model definition
+        campaign.save()
+        messages.success(self.request, f'Your campaign "{campaign.title}" has been submitted and is pending review.')
+        return redirect(reverse_lazy('funding:campaign_detail', kwargs={'pk': campaign.pk}))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Create New Campaign'
+        if self.request.user.is_authenticated and isinstance(self.request.user, CustomUser) and self.request.user.organisation:
+            context['organisation_name'] = self.request.user.organisation.name
+        return context

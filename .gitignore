@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.venv/
+ENV/
+env/
+ENV.bak/
+env.bak/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+static_root/
+staticfiles/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# Secrets
+.env
+*.env.*

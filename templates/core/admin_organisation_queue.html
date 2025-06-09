@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} - CrowdFund Admin{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ page_title }}</h1>
+
+    {% if pending_organisations %}
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <table class="min-w-full leading-normal">
+                <thead>
+                    <tr>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Organisation Name
+                        </th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Applicant Name
+                        </th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Applied On
+                        </th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for org in pending_organisations %}
+                    <tr>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            <p class="text-gray-900 whitespace-no-wrap">{{ org.name }}</p>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            {# Applicant: Assumes CustomUser has a reverse relation to Organisation (e.g., user.organisation FK) #}
+                            {# If an Organisation can have multiple users, or user is linked differently, this needs adjustment #}
+                            {% with applicant=org.customuser_set.first %}
+                                {% if applicant %}
+                                    <p class="text-gray-900 whitespace-no-wrap">{{ applicant.username }} ({{ applicant.email }})</p>
+                                {% else %}
+                                    <p class="text-gray-500 italic">Anonymous Application</p>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            <p class="text-gray-900 whitespace-no-wrap">{{ org.created_at|date:"Y-m-d H:i" }}</p>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            <a href="{% url 'core_admin:admin_organisation_review' pk=org.pk %}" class="text-indigo-600 hover:text-indigo-900 font-semibold">
+                                Review Application
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if is_paginated %}
+            <div class="mt-8 flex justify-center">
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            Previous
+                        </a>
+                    {% endif %}
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            Next
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+        {% endif %}
+
+    {% else %}
+        <div class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded relative" role="alert">
+            <strong class="font-bold">No pending applications!</strong>
+            <span class="block sm:inline">There are currently no organisation applications awaiting review.</span>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

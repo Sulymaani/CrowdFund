@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Organisation Queue{% endblock %}
+
+{% block content %}
+<div class="container mx-auto mt-8">
+    <h1 class="text-2xl font-bold mb-4">Pending Organisation Applications</h1>
+    {% include "partials/_messages.html" %}
+    {% if object_list %}
+        <ul>
+            {% for org in object_list %}
+                <li>
+                    <a href="{% url 'funding:admin_org_review' org.pk %}" class="text-blue-500 hover:underline">{{ org.name }}</a> - Submitted: {{ org.date_applied|date:"Y-m-d" }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No pending organisation applications.</p>
+    {% endif %}
+</div>
+{% endblock %}

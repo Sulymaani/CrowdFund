@@ -49,3 +49,13 @@ class Campaign(models.Model):
     def __str__(self):
         return self.title
 
+
+class Donation(models.Model):
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='donations')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='donations')
+    amount = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'${self.amount} by {self.user.username} for {self.campaign.title}'
+

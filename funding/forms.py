@@ -1,5 +1,5 @@
 from django import forms
-from .models import Organisation, Campaign
+from .models import Organisation, Campaign, Donation
 
 class OrganisationApplicationForm(forms.ModelForm):
     class Meta:
@@ -77,16 +77,14 @@ class CampaignAdminReviewForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Admin can only change status to 'active' or 'rejected'
+        # Admin must choose to either approve (active) or reject the campaign.
         self.fields['status'].choices = [
-            (choice, label) for choice, label in Campaign.STATUS_CHOICES 
+            (choice, label) for choice, label in Campaign.STATUS_CHOICES
             if choice in ['active', 'rejected']
         ]
-        if self.instance and self.instance.pk:
-            # If updating, set initial value for status if it's not 'pending'
-            if self.instance.status != 'pending':
-                self.initial['status'] = self.instance.status
-            else:
-                # Default to no selection if the current status is 'pending'
-                # This encourages admin to make an explicit choice.
-                self.initial['status'] = None
+
+
+class DonationForm(forms.ModelForm):
+    class Meta:
+        model = Donation
+        fields = ['amount']

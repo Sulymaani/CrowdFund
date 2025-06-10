@@ -1,0 +1,64 @@
+{% extends "base_admin.html" %}
+{% load humanize %}
+
+{% block title %}Review Campaign - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow-md rounded-lg p-6">
+    <h1 class="text-2xl font-bold mb-4">{{ page_title }}</h1>
+
+    <div class="mb-6 border-b pb-4">
+        <h2 class="text-xl font-semibold mb-2">Campaign Details</h2>
+        <p><strong>Title:</strong> {{ campaign.title }}</p>
+        <p><strong>Organisation:</strong> {{ campaign.organisation.name }}</p>
+        <p><strong>Goal:</strong> ${{ campaign.goal|intcomma }}</p>
+        <p><strong>Submitted:</strong> {{ campaign.created_at|date:"Y-m-d H:i" }}</p>
+        {% if campaign.creator %}
+            <p><strong>Creator:</strong> {{ campaign.creator.username }}</p>
+        {% endif %}
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <h2 class="text-xl font-semibold mb-4">Review and Action</h2>
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">{{ form.status.label_tag }}</label>
+            <div class="mt-2 space-y-2">
+                {% for radio in form.status %}
+                    <label class="inline-flex items-center mr-4">
+                        {{ radio.tag }}
+                        <span class="ml-2">{{ radio.choice_label }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+            {% if form.status.errors %}
+                <div class="text-red-500 text-sm mt-1">
+                    {% for error in form.status.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="mb-6">
+            {{ form.admin_remarks.label_tag }}
+            {{ form.admin_remarks }}
+             {% if form.admin_remarks.errors %}
+                <div class="text-red-500 text-sm mt-1">
+                    {% for error in form.admin_remarks.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="flex items-center space-x-4">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                Submit Review
+            </button>
+            <a href="{% url 'funding:admin_campaign_queue' %}" class="text-gray-600 hover:text-gray-800">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

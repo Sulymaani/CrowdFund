@@ -90,7 +90,7 @@ class AdminCampaignQueueListView(StaffRequiredMixin, ListView):
 class AdminCampaignReviewView(StaffRequiredMixin, UpdateView):
     model = Campaign
     form_class = CampaignAdminReviewForm
-    template_name = 'funding/admin/campaign_review.html' # To be created
+    template_name = 'funding/admin/campaign_review.html'
     context_object_name = 'campaign'
     success_url = reverse_lazy('funding:admin_campaign_queue')
 
@@ -100,14 +100,12 @@ class AdminCampaignReviewView(StaffRequiredMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        original_status = self.get_object().get_status_display()
-        campaign = form.save()
-        new_status = campaign.get_status_display()
+        response = super().form_valid(form)
         messages.success(
             self.request,
-            f"Campaign '{campaign.title}' status changed from {original_status} to {new_status}."
+            f"Campaign '{self.object.title}' has been reviewed and its status updated to {self.object.get_status_display()}."
         )
-        return super().form_valid(form)
+        return response
 
 
 @role_required('org_owner')

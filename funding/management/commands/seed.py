@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
-from funding.models import Organisation, Campaign
+from funding.models import Organisation, Campaign, Donation
 
 CustomUser = get_user_model()
 
@@ -124,4 +124,28 @@ class Command(BaseCommand):
                 else:
                     self.stdout.write(self.style.WARNING(f'Campaign "{campaign.title}" already exists.'))
         
+        # Seed Donations for the active campaign
+        try:
+            active_campaign = Campaign.objects.get(title='Launch New AI Learning Platform', status='active')
+            donor_user = CustomUser.objects.get(username='donor_user1')
+
+            donations_data = [
+                {'user': donor_user, 'amount': 100},
+                {'user': donor_user, 'amount': 250},
+                {'user': donor_user, 'amount': 50},
+            ]
+
+            for donation_data in donations_data:
+                Donation.objects.create(
+                    campaign=active_campaign,
+                    user=donation_data['user'],
+                    amount=donation_data['amount']
+                )
+            self.stdout.write(self.style.SUCCESS(f'Successfully seeded {len(donations_data)} donations for "{active_campaign.title}".'))
+
+        except Campaign.DoesNotExist:
+            self.stdout.write(self.style.WARNING('Active campaign not found, skipping donation seeding.'))
+        except CustomUser.DoesNotExist:
+            self.stdout.write(self.style.WARNING('Donor user not found, skipping donation seeding.'))
+
         self.stdout.write(self.style.SUCCESS('Database seeding completed.'))

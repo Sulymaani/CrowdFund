@@ -1,12 +1,13 @@
 from django.urls import path
 
 app_name = 'funding'
-from .views import CampaignListView, CampaignDetailView, OrganisationApplicationCreateView, CampaignCreateView # Removed OrganisationCreateView, added OrganisationApplicationCreateView
+from .views import CampaignListView, CampaignDetailView, CreateDonationView, OrganisationApplicationCreateView, CampaignCreateView # Removed OrganisationCreateView, added OrganisationApplicationCreateView
 from .admin_views import PendingOrgListView, OrgReviewView, org_owner_test_view, AdminCampaignQueueListView, AdminCampaignReviewView
 
 urlpatterns = [
     path('', CampaignListView.as_view(), name='campaign_list'),
     path('campaign/<int:pk>/', CampaignDetailView.as_view(), name='campaign_detail'),
+    path('campaign/<int:pk>/donate/', CreateDonationView.as_view(), name='campaign_donate'),
     path('org/apply/', OrganisationApplicationCreateView.as_view(), name='organisation_apply'), # Changed to OrganisationApplicationCreateView
     path('campaign/new/', CampaignCreateView.as_view(), name='campaign_new'),
     # Admin URLs for organisation review

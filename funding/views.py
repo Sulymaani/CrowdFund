@@ -1,15 +1,16 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
+from django.db.models import Sum
 from django.contrib import messages
-from django.views.generic import ListView, DetailView, CreateView
+from django.views.generic import ListView, DetailView, CreateView, View
 # CreateView is imported twice, once from django.views.generic and once from .edit - keep one
 # from django.views.generic.edit import CreateView 
 from django.contrib.auth.mixins import LoginRequiredMixin # UserPassesTestMixin is now in core.mixins
 from core.mixins import VerifiedOrgOwnerRequiredMixin, OrganisationOwnerRequiredMixin, PublicOrNonOrgOwnerRequiredMixin # Assuming OrganisationApplicationCreateView might use OrganisationOwnerRequiredMixin
 
 from accounts.models import CustomUser
-from .models import Campaign, Organisation
-from .forms import OrganisationApplicationForm, CampaignForm
+from .models import Campaign, Organisation, Donation
+from .forms import OrganisationApplicationForm, CampaignForm, DonationForm
 
 class CampaignListView(ListView):
     model = Campaign
@@ -24,6 +25,21 @@ class CampaignDetailView(DetailView):
     template_name = 'funding/campaign_detail.html' # Will be created later
     context_object_name = 'campaign'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        campaign = self.get_object()
+        total_donations = campaign.donations.aggregate(total=Sum('amount'))['total'] or 0
+
+        if campaign.goal > 0:
+            width_percentage = min(int((total_donations / campaign.goal) * 100), 100)
+        else:
+            width_percentage = 0
+
+        context['total_donations'] = total_donations
+        context['width_percentage'] = width_percentage
+        context['donation_form'] = DonationForm()
+        return context
+
 class OrganisationCreateView(CreateView):
     model = Organisation
     template_name = 'funding/organisation_form.html' # Will be created later
@@ -33,6 +49,28 @@ class OrganisationCreateView(CreateView):
     def form_valid(self, form):
         # verified is False by default as per model definition
         return super().form_valid(form)
+
+
+class CreateDonationView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        campaign = get_object_or_404(Campaign, pk=self.kwargs['pk'])
+
+        if campaign.status != 'active':
+            messages.error(request, 'Donations are only allowed for active campaigns.')
+            return redirect('funding:campaign_detail', pk=campaign.pk)
+
+        form = DonationForm(request.POST)
+
+        if form.is_valid():
+            donation = form.save(commit=False)
+            donation.campaign = campaign
+            donation.user = request.user
+            donation.save()
+            messages.success(request, f'Thank you for your generous donation of ${donation.amount}!')
+        else:
+            messages.error(request, 'There was an error with your donation. Please check the amount.')
+
+        return redirect('funding:campaign_detail', pk=campaign.pk)
 
 
 class OrganisationApplicationCreateView(PublicOrNonOrgOwnerRequiredMixin, CreateView):

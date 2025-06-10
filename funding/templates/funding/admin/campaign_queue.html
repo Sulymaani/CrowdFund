@@ -1,0 +1,103 @@
+{% extends "base_admin.html" %}
+{% load humanize %} <!-- Optional: for better date/number formatting -->
+
+{% block title %}{{ page_title|default:"Pending Campaigns" }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto mt-8">
+    <h1 class="text-2xl font-semibold mb-6">{{ page_title|default:"Pending Campaign Submissions" }}</h1>
+
+    {% include "partials/_messages.html" %}
+
+    {% if pending_campaigns %}
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <table class="min-w-full leading-normal">
+                <thead>
+                    <tr>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Campaign Title
+                        </th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Organisation
+                        </th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Creator
+                        </th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Goal
+                        </th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Submitted
+                        </th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for campaign in pending_campaigns %}
+                    <tr>
+                        <td class="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            <p class="text-gray-900 whitespace-no-wrap">{{ campaign.title }}</p>
+                        </td>
+                        <td class="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            <p class="text-gray-900 whitespace-no-wrap">{{ campaign.organisation.name }}</p>
+                        </td>
+                        <td class="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            <p class="text-gray-900 whitespace-no-wrap">{{ campaign.creator.get_full_name|default:campaign.creator.username }}</p>
+                        </td>
+                        <td class="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            <p class="text-gray-900 whitespace-no-wrap">${{ campaign.goal|intcomma }}</p>
+                        </td>
+                        <td class="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            <p class="text-gray-900 whitespace-no-wrap">{{ campaign.created_at|naturaltime }}</p>
+                        </td>
+                        <td class="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            <a href="{% url 'funding:admin_campaign_review' campaign.pk %}" class="text-indigo-600 hover:text-indigo-900 font-semibold">
+                                Review
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if is_paginated %}
+            <div class="mt-8">
+                <nav class="flex justify-center">
+                    <ul class="flex pl-0 list-none rounded my-2">
+                        {% if page_obj.has_previous %}
+                            <li class="relative block py-2 px-3 leading-tight bg-white border border-gray-300 text-blue-700 border-r-0 ml-0 rounded-l hover:bg-gray-200">
+                                <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                            </li>
+                        {% endif %}
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="relative block py-2 px-3 leading-tight bg-blue-500 border border-gray-300 text-white hover:bg-blue-600">
+                                    <span>{{ num }} <span class="sr-only">(current)</span></span>
+                                </li>
+                            {% else %}
+                                <li class="relative block py-2 px-3 leading-tight bg-white border border-gray-300 text-blue-700 hover:bg-gray-200">
+                                    <a href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        {% if page_obj.has_next %}
+                            <li class="relative block py-2 px-3 leading-tight bg-white border border-gray-300 text-blue-700 rounded-r hover:bg-gray-200">
+                                <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+
+    {% else %}
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4" role="alert">
+            <p class="font-bold">No Pending Campaigns</p>
+            <p>There are currently no campaign submissions awaiting review.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

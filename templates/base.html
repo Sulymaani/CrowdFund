@@ -14,13 +14,15 @@
             <div>
                 <a href="{% url 'funding:campaign_list' %}" class="px-3 py-2 rounded hover:bg-blue-700">Campaigns</a>
                 <a href="{% url 'funding:organisation_apply' %}" class="px-3 py-2 rounded hover:bg-blue-700">Apply for Organisation</a>
-                {% if user.is_authenticated %}
-                    <span class="px-3 py-2 text-blue-200">Hi, {{ user.username }}!</span>
-                    <form action="{% url 'logout' %}" method="post" class="inline">
-                        {% csrf_token %}
-                        <button type="submit" class="px-3 py-2 rounded hover:bg-blue-700 bg-transparent border-none text-white cursor-pointer">Logout</button>
-                    </form>
-                    <a href="{% url 'password_change' %}" class="px-3 py-2 rounded hover:bg-blue-700">Change Password</a>
+                {% if user and user.is_authenticated %}
+                    {% with current_user=user %}
+                        <span class="px-3 py-2 text-blue-200">Hi, {{ current_user.username }}!</span>
+                        <form action="{% url 'logout' %}" method="post" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="px-3 py-2 rounded hover:bg-blue-700 bg-transparent border-none text-white cursor-pointer">Logout</button>
+                        </form>
+                        <a href="{% url 'password_change' %}" class="px-3 py-2 rounded hover:bg-blue-700">Change Password</a>
+                    {% endwith %}
                 {% else %}
                     <a href="{% url 'login' %}" class="px-3 py-2 rounded hover:bg-blue-700">Login</a>
                     <!-- Link to registration page will go here -->

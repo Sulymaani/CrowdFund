@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
 
 class Organisation(models.Model):
@@ -38,9 +39,11 @@ class Campaign(models.Model):
     ]
 
     organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name='campaigns')
+    creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='campaigns_created', null=True, blank=True)
     title = models.CharField(max_length=120)
     goal = models.PositiveIntegerField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    admin_remarks = models.TextField(null=True, blank=True, help_text="Internal remarks from an admin regarding the campaign's status.")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

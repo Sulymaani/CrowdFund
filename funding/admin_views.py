@@ -1,23 +1,20 @@
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from core.mixins import StaffRequiredMixin
 from django.views.generic import ListView
-from .models import Organisation
+from .models import Organisation, Campaign
 from accounts.models import CustomUser # For finding organisation owner
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.views.generic.edit import UpdateView
-from .forms import OrganisationAdminReviewForm
+from .forms import OrganisationAdminReviewForm, CampaignAdminReviewForm
 from django.http import HttpResponse
 from accounts.decorators import role_required # For the test view
 from accounts.models import CustomUser # For CustomUser model, not role constants here
 
-class PendingOrgListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+class PendingOrgListView(StaffRequiredMixin, ListView):
     model = Organisation
     template_name = 'funding/admin/org_queue.html'
     context_object_name = 'pending_organisations'
     paginate_by = 10 # Optional: add pagination
-
-    def test_func(self):
-        return self.request.user.is_staff
 
     def get_queryset(self):
         # We need to get the user who owns the organisation.
@@ -36,15 +33,12 @@ class PendingOrgListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return context
 
 
-class OrgReviewView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class OrgReviewView(StaffRequiredMixin, UpdateView):
     model = Organisation
     form_class = OrganisationAdminReviewForm
     template_name = 'funding/admin/org_review.html'
     context_object_name = 'organisation'
     success_url = reverse_lazy('funding:admin_org_queue')
-
-    def test_func(self):
-        return self.request.user.is_staff
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -72,6 +66,46 @@ class OrgReviewView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         messages.success(
             self.request, 
             f"Organisation '{organisation.name}' status changed from {original_status} to {new_status}."
+        )
+        return super().form_valid(form)
+
+
+class AdminCampaignQueueListView(StaffRequiredMixin, ListView):
+    model = Campaign
+    template_name = 'funding/admin/campaign_queue.html' # To be created
+    context_object_name = 'pending_campaigns'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return Campaign.objects.filter(status='pending').order_by('created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Pending Campaign Submissions'
+        # Explicitly add request_user to context for debugging
+        context['debug_request_user_from_view'] = self.request.user
+        return context
+
+
+class AdminCampaignReviewView(StaffRequiredMixin, UpdateView):
+    model = Campaign
+    form_class = CampaignAdminReviewForm
+    template_name = 'funding/admin/campaign_review.html' # To be created
+    context_object_name = 'campaign'
+    success_url = reverse_lazy('funding:admin_campaign_queue')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f"Review Campaign: {self.object.title}"
+        return context
+
+    def form_valid(self, form):
+        original_status = self.get_object().get_status_display()
+        campaign = form.save()
+        new_status = campaign.get_status_display()
+        messages.success(
+            self.request,
+            f"Campaign '{campaign.title}' status changed from {original_status} to {new_status}."
         )
         return super().form_valid(form)
 

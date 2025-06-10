@@ -4,7 +4,8 @@ from django.contrib import messages
 from django.views.generic import ListView, DetailView, CreateView
 # CreateView is imported twice, once from django.views.generic and once from .edit - keep one
 # from django.views.generic.edit import CreateView 
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin # UserPassesTestMixin is now in core.mixins
+from core.mixins import VerifiedOrgOwnerRequiredMixin, OrganisationOwnerRequiredMixin, PublicOrNonOrgOwnerRequiredMixin # Assuming OrganisationApplicationCreateView might use OrganisationOwnerRequiredMixin
 
 from accounts.models import CustomUser
 from .models import Campaign, Organisation
@@ -34,21 +35,14 @@ class OrganisationCreateView(CreateView):
         return super().form_valid(form)
 
 
-class OrganisationApplicationCreateView(UserPassesTestMixin, CreateView):
+class OrganisationApplicationCreateView(PublicOrNonOrgOwnerRequiredMixin, CreateView):
     model = Organisation
     form_class = OrganisationApplicationForm
     template_name = 'funding/organisation_apply.html' # To be created
     success_url = reverse_lazy('funding:campaign_list') # Redirect to campaign list
     login_url = reverse_lazy('login') # Explicitly define login_url for LoginRequiredMixin
 
-    def test_func(self):
-        if not self.request.user.is_authenticated:
-            return True # Allow anonymous users to apply
-        # For authenticated users, check if they are already an org_owner or have an org
-        user = self.request.user
-        if isinstance(user, CustomUser):
-            return not (user.role == 'org_owner' and user.organisation is not None)
-        return True # Default to allow if not a CustomUser instance (should not happen with proper auth)
+    # Access control is now handled by PublicOrNonOrgOwnerRequiredMixin.
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
@@ -81,20 +75,13 @@ class OrganisationApplicationCreateView(UserPassesTestMixin, CreateView):
         return context
 
 
-class CampaignCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+class CampaignCreateView(VerifiedOrgOwnerRequiredMixin, CreateView):
     model = Campaign
     form_class = CampaignForm
     template_name = 'funding/campaign_form.html' # To be created
     # success_url will be set in get_success_url or form_valid
 
-    def test_func(self):
-        user = self.request.user
-        return (
-            isinstance(user, CustomUser) and 
-            user.role == 'org_owner' and 
-            user.organisation is not None and 
-            user.organisation.verified  # Crucially, check if the organisation is verified
-        )
+    # test_func is now handled by VerifiedOrgOwnerRequiredMixin
 
     def get_form_kwargs(self):
         """Hide the organisation field as it's set automatically."""
@@ -116,6 +103,7 @@ class CampaignCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     def form_valid(self, form):
         campaign = form.save(commit=False)
         campaign.organisation = self.request.user.organisation # Assign user's verified org
+        campaign.creator = self.request.user # Assign the logged-in user as the creator
         # 'status' defaults to 'pending' as per Campaign model definition
         campaign.save()
         messages.success(self.request, f'Your campaign "{campaign.title}" has been submitted and is pending review.')

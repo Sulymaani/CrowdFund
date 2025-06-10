@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
-from funding.models import Organisation
+from funding.models import Organisation, Campaign
 
 CustomUser = get_user_model()
 
@@ -76,5 +76,52 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f'User "{user.username}" ({user.get_role_display()}) created.'))
             else:
                 self.stdout.write(self.style.WARNING(f'User "{user.username}" already exists.'))
+        
+        # Retrieve the org owner for Tech Innovators to create campaigns
+        try:
+            campaign_creator_user = CustomUser.objects.get(username='org_owner1', organisation=org1)
+        except CustomUser.DoesNotExist:
+            self.stdout.write(self.style.ERROR('User org_owner1 for Tech Innovators Foundation not found. Cannot create campaigns.'))
+            campaign_creator_user = None
+
+        if campaign_creator_user and org1.verified:
+            # Create Campaigns
+            campaigns_data = [
+                {
+                    'organisation': org1,
+                    'creator': campaign_creator_user,
+                    'title': 'Launch New AI Learning Platform',
+                    'goal': 50000,
+                    'status': 'active',
+                    'admin_remarks': 'Approved: Compelling project with clear objectives.'
+                },
+                {
+                    'organisation': org1,
+                    'creator': campaign_creator_user,
+                    'title': 'Develop Community Coding Kits',
+                    'goal': 25000,
+                    'status': 'pending',
+                    'admin_remarks': ''
+                },
+                {
+                    'organisation': org1,
+                    'creator': campaign_creator_user,
+                    'title': 'Host Global Hackathon Series',
+                    'goal': 75000,
+                    'status': 'rejected',
+                    'admin_remarks': 'Rejected: Budget unclear and lacks detailed timeline. Please revise and resubmit.'
+                },
+            ]
+
+            for camp_data in campaigns_data:
+                campaign, created = Campaign.objects.get_or_create(
+                    title=camp_data['title'],
+                    organisation=camp_data['organisation'],
+                    defaults=camp_data
+                )
+                if created:
+                    self.stdout.write(self.style.SUCCESS(f'Campaign "{campaign.title}" ({campaign.get_status_display()}) created for {org1.name}.'))
+                else:
+                    self.stdout.write(self.style.WARNING(f'Campaign "{campaign.title}" already exists.'))
         
         self.stdout.write(self.style.SUCCESS('Database seeding completed.'))

@@ -1,0 +1,46 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Pending Campaigns - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="bg-white shadow-md rounded-lg p-6">
+    <h1 class="text-2xl font-bold mb-4">{{ page_title|default:"Pending Campaign Submissions" }}</h1>
+
+    {% if pending_campaigns %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white">
+                <thead class="bg-gray-800 text-white">
+                    <tr>
+                        <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Campaign Title</th>
+                        <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Organisation</th>
+                        <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Creator</th>
+                        <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Submitted</th>
+                        <th class="text-left py-3 px-4 uppercase font-semibold text-sm">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="text-gray-700">
+                    {% for campaign in pending_campaigns %}
+                        <tr class="border-b">
+                            <td class="py-3 px-4">{{ campaign.title }}</td>
+                            <td class="py-3 px-4">{{ campaign.organisation.name }}</td>
+                            <td class="py-3 px-4">
+                                {% if campaign.creator %}
+                                    {{ campaign.creator.username }}
+                                {% else %}
+                                    <span class="text-gray-500 italic">N/A (No Creator)</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4">{{ campaign.created_at|date:"Y-m-d H:i" }}</td>
+                            <td class="py-3 px-4">
+                                <a href="{% url 'funding:admin_campaign_review' campaign.pk %}" class="text-blue-500 hover:text-blue-700 font-semibold">Review</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-gray-700">There are no pending campaigns to review at this time.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
 from .models import Organisation, Campaign
+from .forms import CampaignForm, CampaignAdminReviewForm # Import new forms
 
 CustomUser = get_user_model()
 
@@ -62,8 +63,9 @@ class FundingViewsTestCase(TestCase):
         cls.admin_user = CustomUser.objects.create_superuser(
             username='testadmin',
             email='admin@example.com',
-            password='password123'
+            password='password'
         ) # Superuser is_staff=True by default
+        print(f"DEBUG setUpTestData: admin_user created. ID: {cls.admin_user.id}, Username: {cls.admin_user.username}, is_staff: {cls.admin_user.is_staff}, is_active: {cls.admin_user.is_active}")
 
         # Orgs and Users for decorator tests
         cls.pending_org_for_decorator_test = Organisation.objects.create(
@@ -86,13 +88,37 @@ class FundingViewsTestCase(TestCase):
             organisation=cls.verified_org,
             title='Live Test Campaign',
             goal=1000,
-            status='active'
+            creator=cls.org_owner_user_for_campaigns, # Added creator
+            status='active' # Explicitly set active
+        )
+        cls.pending_campaign_for_review = Campaign.objects.create(
+            organisation=cls.verified_org,
+            creator=cls.org_owner_user_for_campaigns,
+            title='Pending Review Test Campaign',
+            goal=2000,
+            status='pending'
+        )
+        cls.pending_campaign_for_rejection_test = Campaign.objects.create(
+            organisation=cls.verified_org,
+            creator=cls.org_owner_user_for_campaigns,
+            title='Pending Campaign for Rejection Test',
+            goal=1600,
+            status='pending'
+        )
+        cls.rejected_campaign_for_listing = Campaign.objects.create(
+            organisation=cls.verified_org,
+            creator=cls.org_owner_user_for_campaigns,
+            title='Rejected Test Campaign',
+            goal=3000,
+            status='rejected',
+            admin_remarks='Previously rejected.'
         )
         cls.pending_campaign = Campaign.objects.create(
             organisation=cls.verified_org,
             title='Pending Test Campaign',
             goal=500,
-            status='pending'
+            status='pending',
+            creator=cls.org_owner_user_for_campaigns
         )
 
     def test_campaign_list_view(self):
@@ -175,7 +201,7 @@ class FundingViewsTestCase(TestCase):
     # --- Admin Organisation Review Tests ---
 
     def test_admin_org_queue_view_staff_access(self):
-        self.client.login(username='testadmin', password='password123')
+        self.client.login(username='testadmin', password='password')
         response = self.client.get(reverse('funding:admin_org_queue'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'funding/admin/org_queue.html')
@@ -187,7 +213,7 @@ class FundingViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 403) # UserPassesTestMixin raises 403 for failed test_func
 
     def test_admin_org_review_view_get_staff_access(self):
-        self.client.login(username='testadmin', password='password123')
+        self.client.login(username='testadmin', password='password')
         response = self.client.get(reverse('funding:admin_org_review', args=[self.pending_org_for_applicant.pk]))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'funding/admin/org_review.html')
@@ -199,7 +225,7 @@ class FundingViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_admin_org_review_post_verify(self):
-        self.client.login(username='testadmin', password='password123')
+        self.client.login(username='testadmin', password='password')
         initial_pending_count = Organisation.objects.filter(verification_status='pending').count()
         form_data = {
             'verification_status': 'verified',
@@ -219,7 +245,7 @@ class FundingViewsTestCase(TestCase):
         self.assertEqual(Organisation.objects.filter(verification_status='pending').count(), initial_pending_count - 1)
 
     def test_admin_org_review_post_reject(self):
-        self.client.login(username='testadmin', password='password123')
+        self.client.login(username='testadmin', password='password')
         # Create a new pending org for this test to avoid state interference
         another_pending_org = Organisation.objects.create(
             name='Another Pending Review Org',
@@ -269,3 +295,183 @@ class FundingViewsTestCase(TestCase):
         self.client.login(username='noorgowner', password='password123')
         response = self.client.get(reverse('funding:test_org_owner_view'))
         self.assertEqual(response.status_code, 403)
+
+    # --- Campaign Creation Tests (CampaignCreateView) ---
+    def test_campaign_create_view_get_verified_org_owner(self):
+        self.client.login(username='testorgowner', password='password123') # Verified org owner
+        response = self.client.get(reverse('funding:campaign_new'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'funding/campaign_form.html')
+        self.assertIsInstance(response.context['form'], CampaignForm)
+
+    def test_campaign_create_view_get_pending_org_owner_denied(self):
+        self.client.login(username='pendingowner', password='password123') # Org is pending
+        response = self.client.get(reverse('funding:campaign_new'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_campaign_create_view_get_rejected_org_owner_denied(self):
+        self.client.login(username='rejectedowner', password='password123') # Org is rejected
+        response = self.client.get(reverse('funding:campaign_new'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_campaign_create_view_get_donor_denied(self):
+        self.client.login(username='testdonor', password='password123')
+        response = self.client.get(reverse('funding:campaign_new'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_campaign_create_view_get_admin_denied(self):
+        self.client.login(username='testadmin', password='password')
+        response = self.client.get(reverse('funding:campaign_new'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_campaign_create_view_post_success(self):
+        self.client.login(username='testorgowner', password='password123')
+        initial_campaign_count = Campaign.objects.count()
+        form_data = {
+            'title': 'New Awesome Campaign',
+            'goal': 15000,
+        }
+        response = self.client.post(reverse('funding:campaign_new'), form_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Campaign.objects.count(), initial_campaign_count + 1)
+        
+        new_campaign = Campaign.objects.latest('created_at')
+        self.assertEqual(new_campaign.title, 'New Awesome Campaign')
+        self.assertEqual(new_campaign.goal, 15000)
+        self.assertEqual(new_campaign.status, 'pending')
+        self.assertEqual(new_campaign.organisation, self.org_owner_user_for_campaigns.organisation)
+        self.assertEqual(new_campaign.creator, self.org_owner_user_for_campaigns)
+        self.assertRedirects(response, reverse('funding:campaign_detail', kwargs={'pk': new_campaign.pk}))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(any('has been submitted and is pending review' in str(m) for m in messages))
+
+    # --- Admin Campaign Queue Tests (AdminCampaignQueueListView) ---
+    def test_admin_campaign_queue_view_staff_access(self):
+        """Test that AdminCampaignQueueListView is accessible to staff."""
+        self.client.login(username='testadmin', password='password')
+        response = self.client.get(reverse('funding:admin_campaign_queue'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'funding/admin/campaign_queue.html')
+        self.assertIn('pending_campaigns', response.context)
+        self.assertContains(response, self.pending_campaign.title)
+        self.assertContains(response, self.pending_campaign_for_review.title)
+        self.assertContains(response, self.pending_campaign_for_rejection_test.title)
+        self.assertNotContains(response, self.campaign.title) # Active campaign
+        self.assertNotContains(response, self.rejected_campaign_for_listing.title) # Rejected campaign
+        self.assertEqual(len(response.context['pending_campaigns']), 3)
+
+    def test_admin_campaign_queue_view_non_staff_access(self):
+        self.client.login(username='testorgowner', password='password123')
+        response = self.client.get(reverse('funding:admin_campaign_queue'))
+        self.assertEqual(response.status_code, 403)
+
+    # --- Admin Campaign Review Tests (AdminCampaignReviewView) ---
+    def test_admin_campaign_review_view_get_staff_access(self):
+        self.client.login(username='testadmin', password='password')
+        response = self.client.get(reverse('funding:admin_campaign_review', args=[self.pending_campaign_for_review.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'funding/admin/campaign_review.html')
+        self.assertIsInstance(response.context['form'], CampaignAdminReviewForm)
+        self.assertEqual(response.context['campaign'], self.pending_campaign_for_review)
+
+    def test_admin_campaign_review_view_get_non_staff_access(self):
+        self.client.login(username='testorgowner', password='password123')
+        response = self.client.get(reverse('funding:admin_campaign_review', args=[self.pending_campaign_for_review.pk]))
+        self.assertEqual(response.status_code, 403)
+
+    def test_admin_campaign_review_post_approve(self):
+        """Test approving a pending campaign via POST to AdminCampaignReviewView."""
+        self.client.login(username='testadmin', password='password')
+        campaign_to_approve = self.pending_campaign_for_review
+        form_data = {
+            'status': 'active',
+            'admin_remarks': 'This campaign looks great. Approved!'
+        }
+        response = self.client.post(reverse('funding:admin_campaign_review', args=[campaign_to_approve.pk]), form_data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, reverse('funding:admin_campaign_queue'))
+        
+        campaign_to_approve.refresh_from_db()
+        self.assertEqual(campaign_to_approve.status, 'active')
+        self.assertEqual(campaign_to_approve.admin_remarks, 'This campaign looks great. Approved!')
+
+    def test_admin_campaign_review_post_reject(self):
+        """Test rejecting a pending campaign via POST to AdminCampaignReviewView."""
+        self.client.login(username='testadmin', password='password')
+        campaign_to_reject = self.pending_campaign_for_rejection_test
+        form_data = {
+            'status': 'rejected',
+            'admin_remarks': 'Not enough detail. Rejected.'
+        }
+        response = self.client.post(
+            reverse('funding:admin_campaign_review', args=[campaign_to_reject.pk]),
+            form_data,
+            follow=True
+        )
+        # The initial redirect should be 302, leading to a 200 page.
+        self.assertRedirects(response, reverse('funding:admin_campaign_queue'), status_code=302, target_status_code=200)
+        
+        campaign_to_reject.refresh_from_db()
+        self.assertEqual(campaign_to_reject.status, 'rejected')
+        self.assertEqual(campaign_to_reject.admin_remarks, 'Not enough detail. Rejected.')
+        
+        # Optionally, check content of the final page (admin_campaign_queue)
+        self.assertContains(response, "Pending Campaign Submissions") # Check title of the queue page
+        # Ensure the rejected campaign is not listed as pending (if logic implies it's removed or not shown)
+        # self.assertNotContains(response, campaign_to_reject.title) # This depends on queue page logic
+
+    def test_admin_campaign_queue_direct_get_context(self):
+        """Test that AdminCampaignQueueListView context has 'user' on a direct GET and print response content."""
+        self.client.login(username='testadmin', password='password') # Corrected password
+        response = self.client.get(reverse('funding:admin_campaign_queue'))
+        self.assertEqual(response.status_code, 200)
+
+
+
+        # Check debug_request_user_from_view from the view's context
+        debug_user_from_view = response.context.get('debug_request_user_from_view')
+        self.assertIsNotNone(debug_user_from_view, "'debug_request_user_from_view' should be in context")
+        if debug_user_from_view is not None: # Added None check before attribute access
+            self.assertTrue(debug_user_from_view.is_authenticated, "'debug_request_user_from_view' should be authenticated")
+            self.assertEqual(debug_user_from_view.username, 'testadmin', "'debug_request_user_from_view' username should be testadmin")
+
+        # Check 'user' from auth context processor
+        user_from_auth_ctx = response.context.get('user')
+        self.assertIsNotNone(user_from_auth_ctx, "'user' from auth context processor should be in context")
+        if user_from_auth_ctx is not None: # Added None check before attribute access
+            self.assertTrue(user_from_auth_ctx.is_authenticated, "'user' from auth context processor should be authenticated")
+            self.assertEqual(user_from_auth_ctx.username, 'testadmin', "'user' from auth context processor username should be testadmin")
+
+        # Check 'request.user' from request context processor
+        request_obj_in_ctx = response.context.get('request')
+        self.assertIsNotNone(request_obj_in_ctx, "'request' object should be in context")
+        if request_obj_in_ctx and hasattr(request_obj_in_ctx, 'user'):
+            self.assertIsNotNone(request_obj_in_ctx.user, "'request.user' should not be None") # Added None check
+            if request_obj_in_ctx.user is not None:
+                self.assertTrue(request_obj_in_ctx.user.is_authenticated, "'request.user' should be authenticated")
+                self.assertEqual(request_obj_in_ctx.user.username, 'testadmin', "'request.user' username should be testadmin")
+
+    def test_admin_campaign_review_post_cannot_set_pending(self):
+        self.client.login(username='testadmin', password='password')
+        # Use an existing campaign that is not pending, e.g., active or rejected, or create one.
+        # For this test, let's assume self.campaign1 is suitable (e.g., initially active or becomes active).
+        campaign_to_test = self.campaign # Assuming campaign is available from setUp
+        original_status = campaign_to_test.status
+
+        form_data = {
+            'status': 'pending', # Attempting to set to 'pending'
+            'admin_remarks': 'Trying to revert to pending.'
+        }
+        
+        review_url = reverse('funding:admin_campaign_review', args=[campaign_to_test.pk])
+        response = self.client.post(review_url, form_data)
+        
+        # Expect a form error because 'pending' should not be a valid choice for admin action
+        self.assertEqual(response.status_code, 200) # Form error usually re-renders the page with status 200
+        # Pass the form instance directly from the context
+        form_instance = response.context['form']
+
+        self.assertFormError(form_instance, 'status', 'Select a valid choice. pending is not one of the available choices.')
+        
+        campaign_to_test.refresh_from_db()
+        self.assertEqual(campaign_to_test.status, original_status, "Campaign status should not have changed.")

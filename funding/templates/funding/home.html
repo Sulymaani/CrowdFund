@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Active Campaigns{% endblock %}
+
+{% block content %}
+<div class="container mx-auto mt-8">
+    <h1 class="text-3xl font-bold mb-6 text-gray-800">Active Campaigns</h1>
+
+    {% include "partials/_messages.html" %}
+
+    {% if campaigns %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for campaign in campaigns %}
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:scale-105 transition-transform duration-300 ease-in-out">
+                    {% if campaign.image_url %} {# Assuming you might add an image_url field later %}
+                        <img src="{{ campaign.image_url }}" alt="{{ campaign.title }}" class="w-full h-48 object-cover">
+                    {% else %}
+                        <div class="w-full h-48 bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
+                            <h2 class="text-2xl font-semibold text-white p-4 text-center">{{ campaign.title|truncatewords:5 }}</h2>
+                        </div>
+                    {% endif %}
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2 text-gray-700 hover:text-blue-600 transition-colors">
+                            <a href="{% url 'funding:campaign_detail' campaign.pk %}">{{ campaign.title }}</a>
+                        </h3>
+                        <p class="text-gray-600 text-sm mb-1">
+                            By: <strong class="text-indigo-700">{{ campaign.organisation.name }}</strong>
+                        </p>
+                        <p class="text-gray-600 text-sm mb-3">
+                            Goal: <span class="font-bold text-green-600">${{ campaign.goal|intcomma }}</span>
+                        </p>
+                        <p class="text-gray-500 text-xs mb-4">
+                            Created: {{ campaign.created_at|naturaltime }}
+                        </p>
+                        <a href="{% url 'funding:campaign_detail' campaign.pk %}" class="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No active campaigns</h3>
+            <p class="mt-1 text-sm text-gray-500">
+                There are currently no active campaigns. Check back later!
+            </p>
+            {% if user.is_authenticated and user.role == 'org_owner' and user.organisation.verified %}
+                 <p class="mt-4">
+                    <a href="{% url 'funding:campaign_new' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Create New Campaign
+                    </a>
+                </p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -3,8 +3,15 @@ from django.urls import path
 app_name = 'funding'
 from .views import CampaignListView, CampaignDetailView, CreateDonationView, OrganisationApplicationCreateView, CampaignCreateView # Removed OrganisationCreateView, added OrganisationApplicationCreateView
 from .admin_views import PendingOrgListView, OrgReviewView, org_owner_test_view, AdminCampaignQueueListView, AdminCampaignReviewView
+from accounts.views import placeholder_view
 
 urlpatterns = [
+    # Dashboard placeholders for testing redirects
+    path('dashboard/admin/', placeholder_view, name='admin_dashboard'),
+    path('dashboard/org/', placeholder_view, name='org_dashboard'),
+    path('org/status/', placeholder_view, name='org_status'),
+    path('dashboard/donor/', placeholder_view, name='donor_dashboard'),
+
     path('', CampaignListView.as_view(), name='campaign_list'),
     path('campaign/<int:pk>/', CampaignDetailView.as_view(), name='campaign_detail'),
     path('campaign/<int:pk>/donate/', CreateDonationView.as_view(), name='campaign_donate'),

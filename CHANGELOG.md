@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-06-11
+
+### Added
+- **Iteration L1: Auth Landing + Global Redirect**
+  - Implemented a combined login/registration landing page at the root URL (`/`).
+  - Added `AuthRequiredMiddleware` to enforce global redirects to the landing page for all unauthenticated users.
+  - Created placeholder dashboard views and URLs for Admin, Organisation Owner, and Donor roles to support role-aware redirects.
+  - Implemented a new donor registration flow at `/register/donor/`.
+
+### Changed
+- The root URL (`/`) now serves the authentication landing page instead of the public campaign list.
+- Replaced the default Django login flow with a custom function-based view (`landing_login_view`) to provide full control over login logic and redirects.
+- Updated `LOGIN_URL` in `settings.py` to point to the root URL (`/`).
+
+### Fixed
+- Resolved persistent test failures related to login redirects by correcting the `LOGIN_URL` setting and ensuring the test client posted to the correct endpoint.
+- Fixed a data integrity issue in tests where an `Organisation`'s `verified` status was being incorrectly overridden by the model's `save()` method.
+- Resolved a persistent `AttributeError` in the login failure test by modifying the test to pass the form object directly to the `assertFormError` assertion.
+
 ## [0.2.0] - 2025-06-09
 
 ### Added

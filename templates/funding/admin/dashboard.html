@@ -1,36 +1,25 @@
-{% extends 'base.html' %}
+{% extends 'base_admin.html' %}
 
 {% block title %}{{ page_title }} - CrowdFund{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ page_title }}</h1>
+    <h1 class="text-3xl font-bold mb-6">{{ page_title }}</h1>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Pending Campaigns Card -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
+        <a href="{% url 'core_admin:admin_campaign_queue' %}" class="bg-white p-6 rounded-lg shadow-md block hover:bg-gray-50">
             <h2 class="text-lg font-semibold text-gray-600">Pending Campaigns</h2>
             <p class="text-4xl font-bold text-yellow-500 mt-2">{{ pending_campaigns_count }}</p>
-<<<<<<< HEAD
-            <a href="{% url 'core_admin:admin_campaign_queue' %}" class="mt-4 inline-block text-indigo-800 hover:text-indigo-900">Review submissions &raquo;</a>
-=======
-            <a href="{% url 'core_admin:admin_campaign_queue' %}" class="mt-4 inline-block text-indigo-600 hover:text-indigo-800">Review submissions &rarr;</a>
->>>>>>> b159ebea713ab9275604dd11ff8e712a671f3f30
-        </div>
+            <p class="mt-4 text-indigo-600 hover:text-indigo-800">Review submissions &rarr;</p>
+        </a>
 
         <!-- Active Campaigns Card -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
+        <a href="#" class="bg-white p-6 rounded-lg shadow-md block hover:bg-gray-50 cursor-not-allowed">
             <h2 class="text-lg font-semibold text-gray-600">Active Campaigns</h2>
             <p class="text-4xl font-bold text-green-500 mt-2">{{ active_campaigns_count }}</p>
-            <a href="#" class="mt-4 inline-block text-gray-400 cursor-not-allowed">View all active &rarr;</a>
-        </div>
-
-        <!-- Total Organisations Card -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-lg font-semibold text-gray-600">Total Organisations</h2>
-            <p class="text-4xl font-bold text-blue-500 mt-2">{{ total_organisations_count }}</p>
-            <a href="#" class="mt-4 inline-block text-gray-400 cursor-not-allowed">Manage organisations &rarr;</a>
-        </div>
+            <p class="mt-4 text-gray-400">View all active &rarr;</p>
+        </a>
 
         <!-- Total Donors Card -->
         <div class="bg-white p-6 rounded-lg shadow-md">

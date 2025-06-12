@@ -54,14 +54,14 @@ class LoginLogoutFlowTests(TestCase):
         self.logout_url = reverse('logout')
         self.home_url = reverse('home')
 
-        self.admin_user = CustomUser.objects.create_superuser(username='testadmin', password='password123', email='admin@test.com')
+        self.admin_user = CustomUser.objects.create_superuser(username='testadmin', password='password123', email='admin@test.com', role='admin')
         self.donor_user = CustomUser.objects.create_user(username='testdonor', password='password123', role='donor')
         self.org = Organisation.objects.create(name='Test Org')
         self.owner = CustomUser.objects.create_user(username='owner', password='password123', role='org_owner', organisation=self.org)
 
     def test_login_redirects_admin_to_admin_dashboard(self):
         response = self.client.post(self.login_url, {'username': 'testadmin', 'password': 'password123'}, follow=True)
-        self.assertRedirects(response, reverse('core_admin:admin_dashboard'))
+        self.assertRedirects(response, reverse('core_admin:dashboard'))
 
     def test_login_redirects_donor_to_donor_dashboard(self):
         response = self.client.post(self.login_url, {'username': 'testdonor', 'password': 'password123'}, follow=True)
@@ -87,12 +87,12 @@ class LoginLogoutFlowTests(TestCase):
 class DashboardAccessTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.admin_user = CustomUser.objects.create_superuser(username='testadmin', password='password123', email='admin@test.com')
+        self.admin_user = CustomUser.objects.create_superuser(username='testadmin', password='password123', email='admin@test.com', role='admin')
         self.donor_user = CustomUser.objects.create_user(username='testdonor', password='password123', role='donor')
         self.org = Organisation.objects.create(name='Test Org')
         self.owner = CustomUser.objects.create_user(username='owner', password='password123', role='org_owner', organisation=self.org)
 
-        self.admin_dashboard_url = reverse('core_admin:admin_dashboard')
+        self.admin_dashboard_url = reverse('core_admin:dashboard')
         self.donor_dashboard_url = reverse('donor_dashboard')
         self.org_dashboard_url = reverse('org_dashboard')
 

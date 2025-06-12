@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.1] - 2025-06-12
+
+### Fixed
+- Corrected `NoReverseMatch` errors for admin queue pages by ensuring all admin-related URLs use the `core_admin` namespace.
+- Cleaned up the admin navigation bar, removing public links and ensuring a consistent layout.
+- Implemented role-based access control on donor and organization dashboards to prevent access by staff users, returning a 403 Forbidden error as expected.
+- Ensured the donation form is not displayed to staff users on campaign detail pages.
+
+## [0.8.0] - 2025-06-12
+
+### Fixed
+- Corrected a `NoReverseMatch` error on admin login by renaming the admin dashboard URL from `admin_dashboard` to `dashboard`.
+- Fixed a broken "Review submissions" link on the admin dashboard by pointing it to the correct `core_admin:admin_campaign_queue` URL.
+- Prevented the donation form from appearing on campaign detail pages for admin users.
+
 ## [0.7.0] - 2025-06-12
 
 ### Added

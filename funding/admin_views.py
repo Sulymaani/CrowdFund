@@ -45,7 +45,7 @@ class AdminCampaignReviewView(StaffRequiredMixin, UpdateView):
     form_class = CampaignAdminReviewForm
     template_name = 'funding/admin/campaign_review.html'
     context_object_name = 'campaign'
-    success_url = reverse_lazy('funding:admin_campaign_queue')
+    success_url = reverse_lazy('core_admin:admin_campaign_queue')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

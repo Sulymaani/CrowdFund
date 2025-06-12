@@ -3,8 +3,8 @@ from django.urls import reverse_lazy
 from django.db.models import Sum, Value
 from django.db.models.functions import Coalesce
 from django.contrib import messages
-from django.views.generic import ListView, DetailView, CreateView, View
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import ListView, DetailView, CreateView, View, TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from core.mixins import DonorRequiredMixin, OrganisationOwnerRequiredMixin
 from accounts.models import CustomUser
@@ -92,8 +92,6 @@ class CampaignCreateView(OrganisationOwnerRequiredMixin, CreateView):
         return context
 
 
-<<<<<<< HEAD
-=======
 class OrganisationListView(ListView):
     model = Organisation
     template_name = 'funding/organisation_list.html'
@@ -108,32 +106,25 @@ class OrganisationListView(ListView):
 
 # --- Dashboards ---
 
->>>>>>> b159ebea713ab9275604dd11ff8e712a671f3f30
-class DonorDashboardView(LoginRequiredMixin, DonorRequiredMixin, ListView):
-    model = Donation
+class DonorDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'funding/donor_dashboard.html'
-    context_object_name = 'donations'
 
-    def get_queryset(self):
-<<<<<<< HEAD
-        # Return all donations made by the current user, ordered by most recent.
-=======
->>>>>>> b159ebea713ab9275604dd11ff8e712a671f3f30
-        return Donation.objects.filter(user=self.request.user).order_by('-created_at')
+    def test_func(self):
+        return self.request.user.role == 'donor'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-<<<<<<< HEAD
         context['page_title'] = 'My Donations'
-=======
-        context['page_title'] = 'My Donor Dashboard'
->>>>>>> b159ebea713ab9275604dd11ff8e712a671f3f30
+        context['donations'] = Donation.objects.filter(user=self.request.user).order_by('-created_at')
         return context
 
 
-class OrgDashboardView(LoginRequiredMixin, OrganisationOwnerRequiredMixin, ListView):
-<<<<<<< HEAD
-=======
+class OrgDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    template_name = 'funding/org_dashboard.html'
+
+    def test_func(self):
+        return self.request.user.role == 'org_owner'
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         org = self.request.user.organisation
@@ -150,45 +141,9 @@ class OrgDashboardView(LoginRequiredMixin, OrganisationOwnerRequiredMixin, ListV
             'active_campaigns': active_campaigns,
             'total_donors': total_donors,
         }
-        return context
->>>>>>> b159ebea713ab9275604dd11ff8e712a671f3f30
-    model = Campaign
-    template_name = 'funding/org_dashboard.html'
-    context_object_name = 'campaigns'
-
-    def get_queryset(self):
-<<<<<<< HEAD
-        # Return all campaigns associated with the user's organisation,
-        # annotated with the total amount raised.
-=======
->>>>>>> b159ebea713ab9275604dd11ff8e712a671f3f30
-        return Campaign.objects.filter(
+        context['campaigns'] = Campaign.objects.filter(
             organisation=self.request.user.organisation
         ).annotate(
             total_raised=Coalesce(Sum('donations__amount'), Value(0))
         ).order_by('-created_at')
-
-<<<<<<< HEAD
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        organisation = self.request.user.organisation
-        campaigns = context['campaigns']
-
-        # KPI Calculations
-        total_raised = campaigns.aggregate(total=Sum('total_raised'))['total'] or 0
-        campaign_count = campaigns.count()
-        
-        # Get unique donor count
-        unique_donors_count = CustomUser.objects.filter(
-            donations__campaign__organisation=organisation
-        ).distinct().count()
-
-        context['page_title'] = f'{organisation.name} Dashboard'
-        context['organisation'] = organisation
-        context['total_raised'] = total_raised
-        context['campaign_count'] = campaign_count
-        context['unique_donors_count'] = unique_donors_count
         return context
-=======
-    
->>>>>>> b159ebea713ab9275604dd11ff8e712a671f3f30

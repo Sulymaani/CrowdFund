@@ -10,7 +10,7 @@
         <ul>
             {% for org in object_list %}
                 <li>
-                    <a href="{% url 'funding:admin_org_review' org.pk %}" class="text-blue-500 hover:underline">{{ org.name }}</a> - Submitted: {{ org.date_applied|date:"Y-m-d" }}
+                    <a href="{% url 'core_admin:admin_org_review' org.pk %}" class="text-indigo-600 hover:text-indigo-900">Review</a> - Submitted: {{ org.date_applied|date:"Y-m-d" }}
                 </li>
             {% endfor %}
         </ul>

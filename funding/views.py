@@ -115,7 +115,7 @@ class DonorDashboardView(LoginRequiredMixin, DonorRequiredMixin, ListView):
 
     def get_queryset(self):
         # Return all donations made by the current user, ordered by most recent.
-        return Donation.objects.filter(user=self.request.user).order_by('-timestamp')
+        return Donation.objects.filter(user=self.request.user).order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -139,6 +139,21 @@ class OrgDashboardView(LoginRequiredMixin, OrganisationOwnerRequiredMixin, ListV
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['page_title'] = 'My Organisation Campaigns'
-        context['organisation'] = self.request.user.organisation
+        organisation = self.request.user.organisation
+        campaigns = context['campaigns']
+
+        # KPI Calculations
+        total_raised = campaigns.aggregate(total=Sum('total_raised'))['total'] or 0
+        campaign_count = campaigns.count()
+        
+        # Get unique donor count
+        unique_donors_count = CustomUser.objects.filter(
+            donations__campaign__organisation=organisation
+        ).distinct().count()
+
+        context['page_title'] = f'{organisation.name} Dashboard'
+        context['organisation'] = organisation
+        context['total_raised'] = total_raised
+        context['campaign_count'] = campaign_count
+        context['unique_donors_count'] = unique_donors_count
         return context

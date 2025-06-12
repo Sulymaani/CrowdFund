@@ -12,15 +12,15 @@ from .forms import DonorRegistrationForm, OrgRegistrationForm
 def get_user_dashboard_url(user):
     """Determines the redirect URL based on the user's role."""
     if user.is_staff:
-        return reverse_lazy('funding:admin_dashboard')
+        return reverse_lazy('core_admin:dashboard')
     elif hasattr(user, 'role'):
         if user.role == 'org_owner':
-            return reverse_lazy('funding:org_dashboard')
+            return reverse_lazy('org_dashboard')
         elif user.role == 'donor':
-            return reverse_lazy('funding:donor_dashboard')
+            return reverse_lazy('donor_dashboard')
 
     # Fallback for any other case
-    return reverse_lazy('landing')
+    return reverse_lazy('home')
 
 
 class DonorRegistrationView(CreateView):
@@ -57,6 +57,9 @@ class CustomLoginView(LoginView):
     """Custom login view using the dedicated login template."""
     template_name = 'accounts/login.html'
     redirect_authenticated_user = True # Redirect if user is already logged in
+
+    def get_success_url(self):
+        return get_user_dashboard_url(self.request.user)
 
 
 class CustomLogoutView(LogoutView):

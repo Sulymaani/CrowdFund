@@ -9,6 +9,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
+    {% if is_impersonating %}
+    <div class="bg-yellow-400 text-black text-center p-2 font-semibold z-50 relative">
+        You are currently impersonating a user. 
+        <a href="{% url 'core_admin:impersonate_stop' %}" class="underline hover:text-red-700 ml-4">Stop Impersonating</a>
+    </div>
+    {% endif %}
     <nav class="bg-blue-600 text-white p-4">
         <div class="container mx-auto flex justify-between items-center">
             <a href="{% url 'home' %}" class="text-xl font-bold">CrowdFund</a>

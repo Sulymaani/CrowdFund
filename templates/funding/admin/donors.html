@@ -1,0 +1,75 @@
+{% extends 'base_admin.html' %}
+{% load query_params %}
+
+{% block title %}{{ page_title }} - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">{{ page_title }}</h1>
+        <form method="get" action="" class="w-full max-w-sm">
+            <div class="flex items-center border-b-2 border-gray-500 py-2">
+                <input class="appearance-none bg-transparent border-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none" type="text" name="q" placeholder="Search donors..." value="{{ search_query }}">
+                <button class="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 border-indigo-600 hover:border-indigo-700 text-sm border-4 text-white py-1 px-2 rounded" type="submit">
+                    Search
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="overflow-x-auto bg-white rounded-lg shadow-md">
+            <table class="min-w-full divide-y divide-gray-200 table-auto">
+                <thead class="sticky top-0 bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Username</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Donated</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Last Donation</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for donor in donors %}
+                        <tr class="odd:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ donor.username }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ donor.email }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${{ donor.total_donated|floatformat:2 }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ donor.last_donation|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-10 px-6 text-gray-500">
+                                {% if search_query %}
+                                    No donors found matching "{{ search_query }}".
+                                {% else %}
+                                    There are no donors registered.
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if is_paginated %}
+        <div class="mt-6 flex justify-center">
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                {% if page_obj.has_previous %}
+                                        <a href="?{% query_params page=page_obj.previous_page_number %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        Previous
+                    </a>
+                {% endif %}
+                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                {% if page_obj.has_next %}
+                                        <a href="?{% query_params page=page_obj.next_page_number %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        Next
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

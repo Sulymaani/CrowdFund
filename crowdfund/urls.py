@@ -19,6 +19,8 @@ from django.urls import path, include
 from core.views import HomeView
 from funding.views import DonorDashboardView, OrgDashboardView
 
+handler404 = 'core.views.custom_page_not_found_view'
+handler403 = 'core.views.custom_permission_denied_view'
 
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),

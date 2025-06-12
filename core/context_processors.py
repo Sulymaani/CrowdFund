@@ -1,3 +1,9 @@
+def impersonation_status(request):
+    """Adds impersonation status to the template context."""
+    return {
+        'is_impersonating': 'impersonator_id' in request.session
+    }
+
 def debug_pre_auth_processor(request):
     print(f"\nDEBUG: debug_pre_auth_processor")
     user = getattr(request, 'user', 'UserAttributeNotOnRequest')

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2025-06-12
+
+### Fixed
+- Impersonation redirect now uses correct 'org_dashboard' URL name.
+- Impersonation session bug where logging out as an impersonated user destroyed the admin session. A new 'Stop Impersonating' banner now correctly restores the admin session without a full logout.
+- The 'Delete' button for organisations in the admin console, which now correctly uses a POST form and includes a confirmation dialog.
+
 ## [0.8.1] - 2025-06-12
 
 ### Fixed

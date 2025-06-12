@@ -14,7 +14,7 @@ from .forms import CampaignForm, DonationForm
 
 class CampaignListView(ListView):
     model = Campaign
-    template_name = 'funding/home.html'
+    template_name = 'funding/campaign_list.html'
     context_object_name = 'campaigns'
 
     def get_queryset(self):
@@ -25,6 +25,9 @@ class CampaignDetailView(DetailView):
     model = Campaign
     template_name = 'funding/campaign_detail.html'
     context_object_name = 'campaign'
+
+    def get_queryset(self):
+        return Campaign.objects.filter(status='active')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -79,7 +82,7 @@ class CampaignCreateView(OrganisationOwnerRequiredMixin, CreateView):
         campaign.creator = self.request.user
         campaign.save()
         messages.success(self.request, f'Your campaign "{campaign.title}" has been submitted and is pending review.')
-        return redirect(reverse_lazy('funding:org_dashboard'))
+        return redirect(reverse_lazy('org_dashboard'))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -109,7 +112,7 @@ class DonorDashboardView(LoginRequiredMixin, DonorRequiredMixin, ListView):
     context_object_name = 'donations'
 
     def get_queryset(self):
-        return Donation.objects.filter(user=self.request.user).order_by('-timestamp')
+        return Donation.objects.filter(user=self.request.user).order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -18,29 +18,13 @@
         {% endif %}
     </div>
 
-    <form method="post">
+    <form id="review-form" method="post" class="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 mb-4">
         {% csrf_token %}
+        <!-- Hidden field for status, to be set by JS -->
+        <input type="hidden" name="status" id="id_status_for_submit">
+
         <h2 class="text-xl font-semibold mb-4">Review and Action</h2>
         
-        <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700">{{ form.status.label_tag }}</label>
-            <div class="mt-2 space-y-2">
-                {% for radio in form.status %}
-                    <label class="inline-flex items-center mr-4">
-                        {{ radio.tag }}
-                        <span class="ml-2">{{ radio.choice_label }}</span>
-                    </label>
-                {% endfor %}
-            </div>
-            {% if form.status.errors %}
-                <div class="text-red-500 text-sm mt-1">
-                    {% for error in form.status.errors %}
-                        <p>{{ error }}</p>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </div>
-
         <div class="mb-6">
             {{ form.admin_remarks.label_tag }}
             {{ form.admin_remarks }}
@@ -53,12 +37,34 @@
             {% endif %}
         </div>
 
+        {% if form.status.errors %}
+            <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+                <span class="font-medium">Action Required:</span> {{ form.status.errors|striptags }}
+            </div>
+        {% endif %}
+
         <div class="flex items-center space-x-4">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                Submit Review
-            </button>
-            <a href="{% url 'core_admin:admin_campaign_queue' %}" class="text-gray-600 hover:text-gray-800">Cancel</a>
+            {% if campaign.status == 'pending' %}
+                <button type="button" onclick="submitReview('active')" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Approve
+                </button>
+                <button type="button" onclick="submitReview('rejected')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Reject
+                </button>
+                <a href="{{ back_url }}" class="inline-block bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Cancel</a>
+            {% else %}
+                <a href="{{ back_url }}" class="inline-block bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Back</a>
+            {% endif %}
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function submitReview(status) {
+    document.getElementById('id_status_for_submit').value = status;
+    document.getElementById('review-form').submit();
+}
+</script>
 {% endblock %}

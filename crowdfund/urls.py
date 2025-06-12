@@ -17,13 +17,22 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from core.views import HomeView
+from funding.views import DonorDashboardView, OrgDashboardView
+
 
 urlpatterns = [
     path("", HomeView.as_view(), name="home"),
     path('__django_admin__/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('accounts/', include('django.contrib.auth.urls')), # For password reset, etc.
-    path('admin/core/', include('core.urls', namespace='core_admin')),
-    # Main app urls are moved to a temporary prefix. They will be replaced by the new blueprint structure.
-    path('app/', include('funding.urls')),
+
+    # Dashboards
+    path('dashboard/donor/', DonorDashboardView.as_view(), name='donor_dashboard'),
+    path('dashboard/org/', OrgDashboardView.as_view(), name='org_dashboard'),
+
+    # Admin URLs
+    path('admin/', include('core.urls', namespace='core_admin')),
+
+    # Main app (campaigns, etc.)
+    path('', include('funding.urls')),
 ]

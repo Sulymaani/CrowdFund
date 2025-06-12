@@ -3,7 +3,14 @@ from . import views
 
 app_name = 'core'
 
+from funding.admin_views import (
+    AdminDashboardView,
+    AdminCampaignQueueListView,
+    AdminCampaignReviewView
+)
+
 urlpatterns = [
-    # The admin organisation verification URLs have been removed.
-    # New admin URLs for campaign approval will be added here later.
+    path('dashboard/', AdminDashboardView.as_view(), name='admin_dashboard'),
+    path('campaign-queue/', AdminCampaignQueueListView.as_view(), name='admin_campaign_queue'),
+    path('campaign-review/<int:pk>/', AdminCampaignReviewView.as_view(), name='admin_campaign_review'),
 ]

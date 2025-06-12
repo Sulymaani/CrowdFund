@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
-from django.db.models import Sum
+from django.db.models import Sum, Value
+from django.db.models.functions import Coalesce
 from django.contrib import messages
 from django.views.generic import ListView, DetailView, CreateView, View
 # CreateView is imported twice, once from django.views.generic and once from .edit - keep one
@@ -104,4 +105,40 @@ class CampaignCreateView(OrganisationOwnerRequiredMixin, CreateView):
         context['page_title'] = 'Create New Campaign'
         if self.request.user.is_authenticated and isinstance(self.request.user, CustomUser) and self.request.user.organisation:
             context['organisation_name'] = self.request.user.organisation.name
+        return context
+
+
+class DonorDashboardView(LoginRequiredMixin, DonorRequiredMixin, ListView):
+    model = Donation
+    template_name = 'funding/donor_dashboard.html'
+    context_object_name = 'donations'
+
+    def get_queryset(self):
+        # Return all donations made by the current user, ordered by most recent.
+        return Donation.objects.filter(user=self.request.user).order_by('-timestamp')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'My Donations'
+        return context
+
+
+class OrgDashboardView(LoginRequiredMixin, OrganisationOwnerRequiredMixin, ListView):
+    model = Campaign
+    template_name = 'funding/org_dashboard.html'
+    context_object_name = 'campaigns'
+
+    def get_queryset(self):
+        # Return all campaigns associated with the user's organisation,
+        # annotated with the total amount raised.
+        return Campaign.objects.filter(
+            organisation=self.request.user.organisation
+        ).annotate(
+            total_raised=Coalesce(Sum('donations__amount'), Value(0))
+        ).order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'My Organisation Campaigns'
+        context['organisation'] = self.request.user.organisation
         return context

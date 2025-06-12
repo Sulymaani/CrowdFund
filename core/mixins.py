@@ -40,7 +40,7 @@ class StaffRequiredMixin(UserPassesTestMixin):
 
 class OrganisationOwnerRequiredMixin(UserPassesTestMixin):
     """
-    Mixin to ensure the user is an authenticated organisation owner.
+    Mixin to ensure the user is an authenticated organisation owner and not staff.
     Organisation does not need to be verified.
     """
     def test_func(self):
@@ -48,7 +48,8 @@ class OrganisationOwnerRequiredMixin(UserPassesTestMixin):
         return (
             user.is_authenticated and
             user.role == 'org_owner' and
-            user.organisation is not None
+            user.organisation is not None and
+            not user.is_staff
         )
 
     def handle_no_permission(self):
@@ -94,10 +95,20 @@ class PublicOrNonOrgOwnerRequiredMixin(UserPassesTestMixin):
 
 class DonorRequiredMixin(UserPassesTestMixin):
     """
-    Mixin to ensure the user is an authenticated donor.
+    Mixin to ensure the user is an authenticated donor and not a staff member.
     """
     def test_func(self):
         user = self.request.user
+        return (
+            user.is_authenticated and
+            user.role == 'donor' and
+            not user.is_staff
+        )
+
+    def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return redirect('login')
+        raise PermissionDenied("You must be a donor to access this page.")
         return (
             user.is_authenticated and
             hasattr(user, 'role') and

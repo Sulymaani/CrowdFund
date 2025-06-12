@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+{% load nav_tags %}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,14 +14,23 @@
             <a href="{% url 'home' %}" class="text-xl font-bold">CrowdFund</a>
             <div>
                 {% if user.is_authenticated %}
-                    <a href="{% url 'funding:campaign_list' %}" class="px-3 py-2 rounded hover:bg-blue-700">Campaigns</a>
-                    {% if user.role == 'org_owner' %}
-                        <a href="{% url 'funding:org_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Dashboard</a>
-                        <a href="{% url 'funding:campaign_new' %}" class="px-3 py-2 rounded hover:bg-blue-700">Create Campaign</a>
+                    
+                    {# === Admin Links === #}
+                    {% if user.is_staff %}
+                        <a href="{% url 'core_admin:admin_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'core_admin:admin_dashboard' %}">Admin Dashboard</a>
+                        <a href="{% url 'core_admin:admin_campaign_queue' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'core_admin:admin_campaign_queue' %}">Campaign Queue</a>
+
+                    {# === Organisation Owner Links === #}
+                    {% elif user.role == 'org_owner' %}
+                        <a href="{% url 'org_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'org_dashboard' %}">My Dashboard</a>
+                        <a href="{% url 'funding:campaign_new' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'funding:campaign_new' %}">Create Campaign</a>
+
+                    {# === Donor Links === #}
                     {% elif user.role == 'donor' %}
-                        <a href="{% url 'funding:donor_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Dashboard</a>
-                    {% elif user.is_staff %}
-                        <a href="{% url 'funding:admin_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">Admin Dashboard</a>
+                        <a href="{% url 'donor_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'donor_dashboard' %}">My Dashboard</a>
+                        <a href="{% url 'funding:campaign_list' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'funding:campaign_list' %}">Browse Campaigns</a>
+                        <a href="{% url 'funding:organisation_list' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'funding:organisation_list' %}">Browse Organisations</a>
+                    
                     {% endif %}
 
                     <span class="px-3 py-2 text-blue-200">Hi, {{ user.username }}!</span>
@@ -29,7 +39,7 @@
                         <button type="submit" class="px-3 py-2 rounded hover:bg-blue-700 bg-transparent border-none text-white cursor-pointer">Logout</button>
                     </form>
                 {% else %}
-                    <a href="{% url 'accounts:login' %}" class="px-3 py-2 rounded hover:bg-blue-700">Login / Register</a>
+                    <a href="{% url 'accounts:login' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'accounts:login' %}">Login / Register</a>
                 {% endif %}
             </div>
         </div>

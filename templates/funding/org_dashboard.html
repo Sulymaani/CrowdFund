@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} - CrowdFund{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold">{{ page_title }}</h1>
+        <a href="{% url 'funding:campaign_new' %}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+            Create New Campaign
+        </a>
+    </div>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h3 class="text-lg font-semibold text-gray-500">Total Raised</h3>
+            <p class="text-3xl font-bold text-gray-800">${{ kpis.total_raised|floatformat:2 }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h3 class="text-lg font-semibold text-gray-500">Active Campaigns</h3>
+            <p class="text-3xl font-bold text-gray-800">{{ kpis.active_campaigns }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h3 class="text-lg font-semibold text-gray-500">Total Donors</h3>
+            <p class="text-3xl font-bold text-gray-800">{{ kpis.total_donors }}</p>
+        </div>
+    </div>
+
+    <h2 class="text-2xl font-semibold mb-4">My Campaigns</h2>
+    {% if campaigns %}
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <table class="min-w-full leading-normal">
+                <thead>
+                    <tr>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Campaign</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Goal</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Raised</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for campaign in campaigns %}
+                        <tr>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                <a href="{% url 'funding:campaign_detail' campaign.pk %}" class="text-blue-500 hover:text-blue-700">{{ campaign.title }}</a>
+                            </td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                {% with status=campaign.status %}
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                        {% if status == 'active' %}bg-green-100 text-green-800{% endif %}
+                                        {% if status == 'pending' %}bg-yellow-100 text-yellow-800{% endif %}
+                                        {% if status == 'closed' %}bg-gray-100 text-gray-800{% endif %}
+                                        {% if status == 'rejected' %}bg-red-100 text-red-800{% endif %}
+                                        {% if status == 'draft' %}bg-blue-100 text-blue-800{% endif %}
+                                    ">
+                                        {{ campaign.get_status_display }}
+                                    </span>
+                                {% endwith %}
+                            </td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                ${{ campaign.goal|floatformat:2 }}
+                            </td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                ${{ campaign.total_raised|floatformat:2 }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="text-center bg-white p-12 rounded-lg shadow-md">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No campaigns yet</h3>
+            <p class="mt-1 text-sm text-gray-500">Get started by creating your first campaign.</p>
+            <div class="mt-6">
+                <a href="{% url 'funding:campaign_new' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Create Campaign
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

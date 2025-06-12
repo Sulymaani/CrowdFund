@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2025-06-12
+
+### Added
+- **Iteration 5: Dashboards & URL Audit**
+  - Implemented detailed dashboards for Donors, Organisation Owners, and Admins, providing role-specific KPIs and actions.
+  - Added smoke tests to ensure users can only access dashboards appropriate for their role, enforcing strict access control.
+
+### Changed
+- **Role-Aware Navigation Polish**
+  - Implemented active link highlighting in the navigation bar to provide a clear visual cue of the user's current location.
+  - Updated access control mixins to be more restrictive, preventing staff users from accessing non-admin pages.
+
+### Fixed
+- **Resolved persistent `NoReverseMatch` errors in the admin interface.** The issue was traced to incorrect URL namespaces in templates (`base_admin.html` and `funding/admin/campaign_queue.html`), where the `funding:` namespace was used instead of the correct `core_admin:` for admin-related URLs.
+- Corrected dashboard access control to prevent staff from accessing non-admin dashboards.
+
 ## [Unreleased]
 
 ### Removed

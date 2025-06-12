@@ -118,6 +118,23 @@ class DonorDashboardView(LoginRequiredMixin, DonorRequiredMixin, ListView):
 
 
 class OrgDashboardView(LoginRequiredMixin, OrganisationOwnerRequiredMixin, ListView):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        org = self.request.user.organisation
+
+        # KPI Calculations
+        total_raised = Donation.objects.filter(campaign__organisation=org).aggregate(Sum('amount'))['amount__sum'] or 0
+        active_campaigns = Campaign.objects.filter(organisation=org, status='active').count()
+        total_donors = Donation.objects.filter(campaign__organisation=org).values('user').distinct().count()
+
+        context['page_title'] = 'My Organisation Dashboard'
+        context['organisation'] = org
+        context['kpis'] = {
+            'total_raised': total_raised,
+            'active_campaigns': active_campaigns,
+            'total_donors': total_donors,
+        }
+        return context
     model = Campaign
     template_name = 'funding/org_dashboard.html'
     context_object_name = 'campaigns'
@@ -129,8 +146,4 @@ class OrgDashboardView(LoginRequiredMixin, OrganisationOwnerRequiredMixin, ListV
             total_raised=Coalesce(Sum('donations__amount'), Value(0))
         ).order_by('-created_at')
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['page_title'] = 'My Organisation Dashboard'
-        context['organisation'] = self.request.user.organisation
-        return context
+    

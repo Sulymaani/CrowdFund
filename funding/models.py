@@ -22,6 +22,8 @@ class Campaign(models.Model):
     organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name='campaigns')
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='campaigns_created', null=True, blank=True)
     title = models.CharField(max_length=120)
+    description = models.TextField(help_text="Tell the story of your campaign.", null=True, blank=True)
+    cover_image = models.ImageField(upload_to='campaign_covers/', null=True, blank=True, help_text="A cover image for your campaign page.")
     goal = models.PositiveIntegerField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     admin_remarks = models.TextField(null=True, blank=True, help_text="Internal remarks from an admin regarding the campaign's status.")

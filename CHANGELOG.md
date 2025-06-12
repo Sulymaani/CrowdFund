@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Removed
+- **Organisation Verification Flow**: Removed the entire admin-led organisation verification process. Organisations now self-register with full details and are active immediately.
+    - Deleted `verification_status`, `verified`, and `admin_remarks` fields from the `Organisation` model.
+    - Removed all related admin views (`AdminOrganisationQueueView`, `AdminOrganisationReviewView`), forms (`OrganisationAdminReviewForm`), and URL patterns from the `core` and `funding` apps.
+    - Deleted obsolete organisation application forms and views.
+
+### Added
+- **Unified Registration Flow**: Implemented separate registration paths for donors and organisations under the `/accounts/` app.
+    - `/accounts/register/donor/`: For donor sign-ups.
+    - `/accounts/register/org/`: For organisation owners to register themselves and their organisation in a single step.
+- Users are now automatically logged in and redirected to their respective dashboards upon successful registration.
+
 ## [0.3.0] - 2025-06-11
 
 ### Added

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 flex items-center justify-center">
+    <div class="max-w-md w-full bg-white p-8 rounded-lg shadow-md text-center">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">{{ page_title|default:"Dashboard" }}</h1>
+        <p class="text-gray-600 mb-6">Welcome, <strong>{{ request.user.username }}</strong>!</p>
+        <p class="text-gray-500">This page is currently under construction. Full functionality will be available soon.</p>
+        
+        <div class="mt-8">
+            <form action="{% url 'logout' %}" method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="text-indigo-600 hover:text-indigo-800 font-semibold bg-transparent border-none cursor-pointer p-0">
+                    Log Out
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

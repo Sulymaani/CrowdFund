@@ -1,60 +1,39 @@
 from django import forms
 from .models import Organisation, Campaign, Donation
 
-class OrganisationApplicationForm(forms.ModelForm):
+class OrganisationRegistrationForm(forms.ModelForm):
+    """
+    Form for organisations to register with their full details.
+    """
     class Meta:
         model = Organisation
-        fields = ['name', 'application_notes']
+        fields = ['name', 'website', 'mission', 'contact_phone']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'}),
-            'application_notes': forms.Textarea(attrs={'rows': 4, 'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'}),
+            'website': forms.URLInput(attrs={'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'}),
+            'mission': forms.Textarea(attrs={'rows': 4, 'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'}),
+            'contact_phone': forms.TextInput(attrs={'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'}),
         }
         help_texts = {
             'name': 'The official name of your organisation.',
-            'application_notes': 'Please provide a brief description of your organisation and its mission. This will be reviewed by an administrator.'
+            'website': "Your organisation's official website.",
+            'mission': "Briefly describe your organisation's mission and goals.",
+            'contact_phone': 'A contact phone number for the organisation.'
         }
-
-
-class OrganisationAdminReviewForm(forms.ModelForm):
-    verification_status = forms.ChoiceField(
-        choices=Organisation.VERIFICATION_CHOICES,
-        widget=forms.RadioSelect,
-        label="Verification Status"
-    )
-    admin_remarks = forms.CharField(
-        widget=forms.Textarea(attrs={'rows': 4}),
-        required=False,
-        label="Admin Remarks"
-    )
-
-    class Meta:
-        model = Organisation
-        fields = ['verification_status', 'admin_remarks']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Filter out 'pending' from choices as admin must pick 'verified' or 'rejected'
-        self.fields['verification_status'].choices = [
-            (choice, label) for choice, label in Organisation.VERIFICATION_CHOICES 
-            if choice in ['verified', 'rejected']
-        ]
-        if self.instance and self.instance.pk:
-            # If updating, set initial value for verification_status if it's not pending
-            if self.instance.verification_status != 'pending':
-                self.initial['verification_status'] = self.instance.verification_status
-            else:
-                # Default to no selection if the current status is 'pending'
-                self.initial['verification_status'] = None
 class CampaignForm(forms.ModelForm):
     class Meta:
         model = Campaign
-        fields = ['title', 'goal'] # 'organisation' and 'status' are set in the view
+        fields = ['title', 'description', 'cover_image', 'goal']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'}),
+            'description': forms.Textarea(attrs={'rows': 4, 'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'}),
+            'cover_image': forms.ClearableFileInput(attrs={'class': 'mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100'}),
             'goal': forms.NumberInput(attrs={'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm', 'min': '1'}),
         }
         help_texts = {
             'title': 'The title of your fundraising campaign.',
+            'description': 'Provide a detailed description of your campaign, its goals, and how the funds will be used.',
+            'cover_image': 'Upload a compelling cover image for your campaign page.',
             'goal': 'The target amount you aim to raise (in whole currency units).',
         }
 

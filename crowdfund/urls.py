@@ -16,13 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from accounts.views import landing_login_view
+from core.views import HomeView
 
 urlpatterns = [
-    path("", landing_login_view, name="landing"),
+    path("", HomeView.as_view(), name="home"),
     path('__django_admin__/', admin.site.urls),
+    path('accounts/', include('accounts.urls')),
     path('accounts/', include('django.contrib.auth.urls')), # For password reset, etc.
-    path('accounts/custom/', include('accounts.urls')),
     path('admin/core/', include('core.urls', namespace='core_admin')),
     # Main app urls are moved to a temporary prefix. They will be replaced by the new blueprint structure.
     path('app/', include('funding.urls')),

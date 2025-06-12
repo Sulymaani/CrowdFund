@@ -3,9 +3,8 @@ from .models import Organisation, Campaign
 
 @admin.register(Organisation)
 class OrganisationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'verified', 'created_at')
-    list_filter = ('verified',)
-    search_fields = ('name',)
+    list_display = ('name', 'website', 'contact_phone', 'created_at')
+    search_fields = ('name', 'website')
 
 @admin.register(Campaign)
 class CampaignAdmin(admin.ModelAdmin):

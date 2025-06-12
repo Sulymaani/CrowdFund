@@ -1,20 +1,21 @@
 from django.shortcuts import redirect
 from django.urls import reverse, resolve, Resolver404
 
+# Forcing a reload to fix stale code issue.
 class AuthRequiredMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
         # Define URL names that do not require authentication.
         self.exempt_urls = [
-            'landing',
-            'login', # django.contrib.auth.urls
-            'logout', # django.contrib.auth.urls
-            'password_reset', # django.contrib.auth.urls
-            'password_reset_done', # django.contrib.auth.urls
-            'password_reset_confirm', # django.contrib.auth.urls
-            'password_reset_complete', # django.contrib.auth.urls
+            'home',
+            'accounts:login',
+            'accounts:logout',
+            'password_reset',
+            'password_reset_done',
+            'password_reset_confirm',
+            'password_reset_complete',
             'accounts:register_donor',
-            'funding:organisation_apply',
+            'accounts:register_org',
         ]
         # Define path prefixes that do not require authentication.
         self.exempt_path_prefixes = [
@@ -43,4 +44,4 @@ class AuthRequiredMiddleware:
             pass
 
         # If the user is not authenticated and the URL is not exempt, redirect to the landing page.
-        return redirect('landing')
+        return redirect('home')

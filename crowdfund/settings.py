@@ -31,6 +31,9 @@ ALLOWED_HOSTS = []
 # Application definition
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
+LOGIN_URL = 'accounts:login' # All login redirects point to the login page
+LOGIN_REDIRECT_URL = '/app/' # Fallback redirect for authenticated users
+LOGOUT_REDIRECT_URL = 'home' # Redirect to landing page after logout
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -53,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'accounts.middleware.AuthRequiredMiddleware', # Custom middleware for auth redirect
 ]
 
 ROOT_URLCONF = 'crowdfund.urls'
@@ -118,9 +122,7 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Redirect URLs for login/logout
-LOGIN_REDIRECT_URL = 'funding:campaign_list'
-LOGOUT_REDIRECT_URL = 'funding:campaign_list'
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/

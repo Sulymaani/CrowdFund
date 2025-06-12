@@ -3,33 +3,14 @@ from django.conf import settings
 from django.utils import timezone
 
 class Organisation(models.Model):
-    VERIFICATION_CHOICES = [
-        ('pending', 'Pending'),
-        ('verified', 'Verified'),
-        ('rejected', 'Rejected'),
-    ]
-
     name = models.CharField(max_length=120, unique=True)
-    application_notes = models.TextField(null=True, blank=True, help_text="Notes submitted by the organisation during application.")
-    verification_status = models.CharField(
-        max_length=10, 
-        choices=VERIFICATION_CHOICES, 
-        default='pending', 
-        help_text="The current verification status of the organisation."
-    )
-    admin_remarks = models.TextField(null=True, blank=True, help_text="Internal remarks from an admin regarding the verification.")
-    verified = models.BooleanField(default=False, help_text="True if the organisation has been verified by an admin.") # Existing field
+    website = models.URLField(max_length=200, blank=True, null=True)
+    mission = models.TextField(blank=True, null=True)
+    contact_phone = models.CharField(max_length=20, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.name} ({self.get_verification_status_display()})"
-
-    def save(self, *args, **kwargs):
-        if self.verification_status == 'verified':
-            self.verified = True
-        else:
-            self.verified = False # Ensure it's False for 'pending' or 'rejected'
-        super().save(*args, **kwargs)
+        return self.name
 
 class Campaign(models.Model):
     STATUS_CHOICES = [
@@ -41,6 +22,8 @@ class Campaign(models.Model):
     organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name='campaigns')
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='campaigns_created', null=True, blank=True)
     title = models.CharField(max_length=120)
+    description = models.TextField(help_text="Tell the story of your campaign.", null=True, blank=True)
+    cover_image = models.ImageField(upload_to='campaign_covers/', null=True, blank=True, help_text="A cover image for your campaign page.")
     goal = models.PositiveIntegerField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     admin_remarks = models.TextField(null=True, blank=True, help_text="Internal remarks from an admin regarding the campaign's status.")

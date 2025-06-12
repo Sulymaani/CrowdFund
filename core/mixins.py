@@ -38,26 +38,6 @@ class StaffRequiredMixin(UserPassesTestMixin):
             return redirect('login') # Or your login URL
         raise PermissionDenied("You do not have permission to access this page.")
 
-class VerifiedOrgOwnerRequiredMixin(UserPassesTestMixin):
-    """
-    Mixin to ensure the user is an authenticated organisation owner
-    and their organisation is verified.
-    """
-    def test_func(self):
-        user = self.request.user
-        return (
-            user.is_authenticated and
-            user.role == 'org_owner' and
-            user.organisation is not None and
-            user.organisation.verified
-        )
-
-    def handle_no_permission(self):
-        if not self.request.user.is_authenticated:
-            return redirect('login')
-        # If authenticated but not meeting criteria, raise 403
-        raise PermissionDenied("Your organisation must be verified to perform this action.")
-
 class OrganisationOwnerRequiredMixin(UserPassesTestMixin):
     """
     Mixin to ensure the user is an authenticated organisation owner.
@@ -110,3 +90,23 @@ class PublicOrNonOrgOwnerRequiredMixin(UserPassesTestMixin):
         # For authenticated users who fail the test_func (i.e., existing org owners with an org)
         messages.info(self.request, self.permission_denied_message)
         return redirect(self.redirect_url_on_permission_denied)
+
+
+class DonorRequiredMixin(UserPassesTestMixin):
+    """
+    Mixin to ensure the user is an authenticated donor.
+    """
+    def test_func(self):
+        user = self.request.user
+        return (
+            user.is_authenticated and
+            hasattr(user, 'role') and
+            user.role == 'donor'
+        )
+
+    def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return super().handle_no_permission()
+        
+        # For authenticated non-donors, raise a 403 Forbidden error.
+        raise PermissionDenied("Only donors are allowed to make donations.")

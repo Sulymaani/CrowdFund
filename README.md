@@ -31,3 +31,14 @@ This project is being developed incrementally. This README will be updated as ne
     ```
 
 The application will be available at `http://127.0.0.1:8000/`.
+
+## User Authentication
+
+This project follows an **authentication-first** design. There are no public-facing pages; all users are required to have an account and be logged in to access the application.
+
+- **Landing Page**: All users (both authenticated and unauthenticated) are directed to a combined login and registration landing page at the root URL (`/`).
+- **Global Redirects**: Any attempt to access a protected page without being authenticated will result in a redirect to the landing page.
+- **Role-Based Dashboards**: Upon successful login, users are redirected to a dashboard specific to their role:
+  - **Donors**: Redirected to their personal dashboard.
+  - **Organisation Owners**: Redirected to their organisation's dashboard (if verified) or a status page (if pending or rejected).
+  - **Admins**: Redirected to the admin console.

@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Removed
+- **Organisation Verification Flow**: Removed the entire admin-led organisation verification process. Organisations now self-register with full details and are active immediately.
+    - Deleted `verification_status`, `verified`, and `admin_remarks` fields from the `Organisation` model.
+    - Removed all related admin views (`AdminOrganisationQueueView`, `AdminOrganisationReviewView`), forms (`OrganisationAdminReviewForm`), and URL patterns from the `core` and `funding` apps.
+    - Deleted obsolete organisation application forms and views.
+
+### Added
+- **Unified Registration Flow**: Implemented separate registration paths for donors and organisations under the `/accounts/` app.
+    - `/accounts/register/donor/`: For donor sign-ups.
+    - `/accounts/register/org/`: For organisation owners to register themselves and their organisation in a single step.
+- Users are now automatically logged in and redirected to their respective dashboards upon successful registration.
+
+## [0.3.0] - 2025-06-11
+
+### Added
+- **Iteration L1: Auth Landing + Global Redirect**
+  - Implemented a combined login/registration landing page at the root URL (`/`).
+  - Added `AuthRequiredMiddleware` to enforce global redirects to the landing page for all unauthenticated users.
+  - Created placeholder dashboard views and URLs for Admin, Organisation Owner, and Donor roles to support role-aware redirects.
+  - Implemented a new donor registration flow at `/register/donor/`.
+
+### Changed
+- The root URL (`/`) now serves the authentication landing page instead of the public campaign list.
+- Replaced the default Django login flow with a custom function-based view (`landing_login_view`) to provide full control over login logic and redirects.
+- Updated `LOGIN_URL` in `settings.py` to point to the root URL (`/`).
+
+### Fixed
+- Resolved persistent test failures related to login redirects by correcting the `LOGIN_URL` setting and ensuring the test client posted to the correct endpoint.
+- Fixed a data integrity issue in tests where an `Organisation`'s `verified` status was being incorrectly overridden by the model's `save()` method.
+- Resolved a persistent `AttributeError` in the login failure test by modifying the test to pass the form object directly to the `assertFormError` assertion.
+
 ## [0.2.0] - 2025-06-09
 
 ### Added

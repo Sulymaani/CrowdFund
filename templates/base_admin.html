@@ -11,10 +11,9 @@
 
     <nav class="bg-gray-800 p-4 text-white">
         <div class="container mx-auto flex justify-between items-center">
-            <a href="{% url 'funding:campaign_list' %}" class="text-lg font-semibold">CrowdFund Admin</a>
+            <a href="{% url 'core_admin:admin_dashboard' %}" class="text-lg font-semibold">CrowdFund Admin</a>
             <div>
-                <a href="{% url 'funding:admin_org_queue' %}" class="px-3 py-2 rounded hover:bg-gray-700">Org Queue</a>
-                <a href="{% url 'funding:admin_campaign_queue' %}" class="px-3 py-2 rounded hover:bg-gray-700">Campaign Queue</a>
+                <a href="{% url 'core_admin:admin_campaign_queue' %}" class="px-3 py-2 rounded hover:bg-gray-700">Campaign Queue</a>
                 
                 <span style="color: gray; margin-left: 10px;">
                 {% if user %}

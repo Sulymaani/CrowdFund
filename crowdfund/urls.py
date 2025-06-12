@@ -31,7 +31,11 @@ urlpatterns = [
     path('dashboard/org/', OrgDashboardView.as_view(), name='org_dashboard'),
 
     # Admin URLs
+<<<<<<< HEAD
     path('admin/', include('core.urls', namespace='core_admin')),
+=======
+    path('admin/', include(('core.urls', 'core'), namespace='core_admin')),
+>>>>>>> b159ebea713ab9275604dd11ff8e712a671f3f30
 
     # Main app (campaigns, etc.)
     path('', include('funding.urls')),

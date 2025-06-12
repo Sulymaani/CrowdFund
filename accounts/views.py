@@ -12,7 +12,11 @@ from .forms import DonorRegistrationForm, OrgRegistrationForm
 def get_user_dashboard_url(user):
     """Determines the redirect URL based on the user's role."""
     if user.is_staff:
+<<<<<<< HEAD
         return reverse_lazy('core_admin:dashboard')
+=======
+        return reverse_lazy('core_admin:admin_dashboard')
+>>>>>>> b159ebea713ab9275604dd11ff8e712a671f3f30
     elif hasattr(user, 'role'):
         if user.role == 'org_owner':
             return reverse_lazy('org_dashboard')

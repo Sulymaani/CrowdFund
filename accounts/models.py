@@ -1,6 +1,12 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.conf import settings
+import os
 from funding.models import Organisation # Ensure funding.models is available
+
+def user_profile_path(instance, filename):
+    # File will be uploaded to MEDIA_ROOT/user_<id>/<filename>
+    return f'user_{instance.id}/profile/{filename}'
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
@@ -10,6 +16,7 @@ class CustomUser(AbstractUser):
         ('admin', 'Admin'),
     )
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='donor')
+    profile_picture = models.ImageField(upload_to=user_profile_path, blank=True, null=True, help_text='Profile picture of the user')
     organisation = models.ForeignKey(
         Organisation, 
         on_delete=models.SET_NULL, 

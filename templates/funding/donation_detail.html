@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">{{ page_title }}</h1>
+        <a href="{% url 'funding:campaign_detail' donation.campaign.id %}" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
+            Back to Campaign
+        </a>
+    </div>
+
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Donation Information Section -->
+            <div class="border-b pb-4">
+                <h2 class="text-xl font-medium text-gray-800 mb-2">Donation Information</h2>
+                <p class="text-gray-700"><strong>Amount:</strong> ${{ donation.amount|floatformat:2|intcomma }}</p>
+                <p class="text-gray-700"><strong>Date:</strong> {{ donation.created_at|date:"F j, Y, g:i a" }}</p>
+                <p class="text-gray-700"><strong>Reference Number:</strong> {{ donation.reference_number }}</p>
+            </div>
+
+            <!-- Donor Information Section with Profile Picture -->
+            <div class="border-b pb-4">
+                <h2 class="text-xl font-medium text-gray-800 mb-2">Donor Information</h2>
+                <div class="flex items-center space-x-4">
+                    {% if donation.user.profile_picture %}
+                        <div class="h-16 w-16 rounded-full overflow-hidden border-2 border-gray-200">
+                            <img src="{{ donation.user.profile_picture.url }}" alt="{{ donation.user.username }}" class="h-full w-full object-cover">
+                        </div>
+                    {% else %}
+                        <div class="h-16 w-16 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center border-2 border-gray-200">
+                            <span class="text-gray-600 text-xl font-medium">{{ donation.user.username|first|upper }}</span>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <p class="text-gray-700"><strong>Donor:</strong> {{ donation.user.username }}</p>
+                        <p class="text-gray-700"><strong>Email:</strong> {{ donation.user.email }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comment Section -->
+            <div class="border-b pb-4">
+                <h2 class="text-xl font-medium text-gray-800 mb-2">Comment</h2>
+                {% if donation.comment %}
+                    <p class="text-gray-700">{{ donation.comment }}</p>
+                {% else %}
+                    <p class="text-gray-500 italic">No comment provided with this donation.</p>
+                {% endif %}
+            </div>
+
+            <!-- Campaign Information Section -->
+            <div>
+                <h2 class="text-xl font-medium text-gray-800 mb-2">Campaign Information</h2>
+                <p class="text-gray-700"><strong>Campaign:</strong> {{ donation.campaign.title }}</p>
+                <p class="text-gray-700"><strong>Organization:</strong> {{ donation.campaign.organisation.name }}</p>
+                <p class="text-gray-700"><strong>Status:</strong> 
+                    <span class="px-2 py-1 rounded-full text-xs font-medium
+                    {% if donation.campaign.status == 'active' %}bg-green-100 text-green-800{% endif %}
+                    {% if donation.campaign.status == 'pending' %}bg-yellow-100 text-yellow-800{% endif %}
+                    {% if donation.campaign.status == 'rejected' %}bg-red-100 text-red-800{% endif %}">
+                    {{ donation.campaign.status|title }}
+                    </span>
+                </p>
+                <p class="mt-2">
+                    <a href="{% url 'funding:campaign_detail' donation.campaign.id %}" 
+                       class="text-blue-600 hover:text-blue-800 underline">
+                        View Campaign
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

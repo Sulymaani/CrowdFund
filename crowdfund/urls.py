@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from core.views import HomeView
-from funding.views import DonorDashboardView, OrgDashboardView
+from funding.views import DonorDashboardView, OrgDashboardView, OrganisationSettingsView
 
 handler404 = 'core.views.custom_page_not_found_view'
 handler403 = 'core.views.custom_permission_denied_view'
@@ -28,13 +28,17 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('accounts/', include('django.contrib.auth.urls')), # For password reset, etc.
 
-    # Dashboards
+    # Donor Dashboard
     path('dashboard/donor/', DonorDashboardView.as_view(), name='donor_dashboard'),
-    path('dashboard/org/', OrgDashboardView.as_view(), name='org_dashboard'),
+    
+    # Organization URLs - consolidated under /org/ prefix
+    path('org/dashboard/', OrgDashboardView.as_view(), name='org_dashboard'),
+    path('org/settings/', OrganisationSettingsView.as_view(), name='org_settings'),
+    path('org/', include('funding.org_urls')),  # Organization-specific URLs from funding app
 
     # Admin URLs
     path('admin/', include('core.urls', namespace='core_admin')),
 
-    # Main app (campaigns, etc.)
+    # Main app (campaigns, etc.) - for public/donor views
     path('', include('funding.urls')),
 ]

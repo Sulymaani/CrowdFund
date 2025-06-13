@@ -1,0 +1,103 @@
+{% extends 'base_org.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumbs navigation -->
+    <nav class="bg-gray-50 p-3 mb-4 rounded-lg" aria-label="Breadcrumb">
+        <ol class="flex flex-wrap text-sm">
+            <li class="flex items-center">
+                <a href="{% url 'org_dashboard' %}" class="text-blue-600 hover:text-blue-800">
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                    </svg>
+                    Dashboard
+                </a>
+                <svg class="w-4 h-4 text-gray-400 mx-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+            </li>
+            <li class="flex items-center">
+                <a href="{% url 'org:donations_list' %}" class="text-blue-600 hover:text-blue-800">Donations</a>
+                <svg class="w-4 h-4 text-gray-400 mx-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+            </li>
+            <li>
+                <span class="text-gray-500">Donation Details</span>
+            </li>
+        </ol>
+    </nav>
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">{{ page_title }}</h1>
+        <a href="{% url 'org:donations_list' %}" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
+            Back to All Donations
+        </a>
+    </div>
+
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="border bg-gray-50 rounded-lg p-4 hover:shadow-md transition duration-200">
+                <h2 class="text-xl font-medium text-blue-800 mb-3 border-b pb-2">Donation Information</h2>
+                <p class="text-gray-700 my-2"><strong class="text-gray-800">Amount:</strong> <span class="text-green-600 font-bold">${{ donation.amount|floatformat:2|intcomma }}</span></p>
+                <p class="text-gray-700 my-2"><strong class="text-gray-800">Date:</strong> {{ donation.created_at|date:"F j, Y, g:i a" }}</p>
+                <p class="text-gray-700 my-2"><strong class="text-gray-800">Reference Number:</strong> <span class="font-mono bg-gray-100 px-2 py-1 rounded text-sm">{{ donation.reference_number }}</span></p>
+            </div>
+
+            <div class="border bg-gray-50 rounded-lg p-4 hover:shadow-md transition duration-200">
+                <h2 class="text-xl font-medium text-blue-800 mb-3 border-b pb-2">Donor Information</h2>
+                <div class="flex items-center space-x-4 mb-2">
+                    {% if donation.user.profile_picture %}
+                        <div class="h-16 w-16 rounded-full overflow-hidden border-2 border-gray-200">
+                            <img src="{{ donation.user.profile_picture.url }}" alt="{{ donation.user.username }}" class="h-full w-full object-cover">
+                        </div>
+                    {% else %}
+                        <div class="h-16 w-16 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center border-2 border-gray-200">
+                            <span class="text-gray-600 text-xl font-medium">{{ donation.user.username|first|upper }}</span>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <p class="text-gray-700"><strong>Donor:</strong> {{ donation.user.username }}</p>
+                        <p class="text-gray-700"><strong>Email:</strong> {{ donation.user.email }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border bg-gray-50 rounded-lg p-4 hover:shadow-md transition duration-200 col-span-1 md:col-span-2">
+                <h2 class="text-xl font-medium text-blue-800 mb-3 border-b pb-2">Comment</h2>
+                {% if donation.comment %}
+                    <p class="text-gray-700 bg-white p-3 rounded border border-gray-200">{{ donation.comment }}</p>
+                {% else %}
+                    <p class="text-gray-500 italic bg-white p-3 rounded border border-gray-200">No comment provided with this donation.</p>
+                {% endif %}
+            </div>
+
+            <div class="border bg-gray-50 rounded-lg p-4 hover:shadow-md transition duration-200 col-span-1 md:col-span-2">
+                <h2 class="text-xl font-medium text-blue-800 mb-3 border-b pb-2">Campaign Information</h2>
+                <div class="flex flex-col sm:flex-row justify-between">
+                    <div>
+                        <p class="text-gray-700 my-2"><strong class="text-gray-800">Campaign:</strong> {{ donation.campaign.title }}</p>
+                        <p class="text-gray-700 my-2"><strong class="text-gray-800">Status:</strong> 
+                            <span class="px-2 py-1 rounded-full text-xs font-medium inline-flex items-center
+                            {% if donation.campaign.status == 'active' %}bg-green-100 text-green-800{% elif donation.campaign.status == 'draft' %}bg-gray-100 text-gray-800{% elif donation.campaign.status == 'completed' %}bg-blue-100 text-blue-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            <span class="h-2 w-2 rounded-full mr-1 {% if donation.campaign.status == 'active' %}bg-green-600{% elif donation.campaign.status == 'draft' %}bg-gray-600{% elif donation.campaign.status == 'completed' %}bg-blue-600{% else %}bg-yellow-600{% endif %}"></span>
+                            {{ donation.campaign.status|title }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="mt-4 sm:mt-0">
+                        <a href="{% url 'org:campaign_detail' donation.campaign.id %}" 
+                           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm transition duration-200">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
+                                <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            View Campaign
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

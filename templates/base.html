@@ -21,15 +21,17 @@
             <div>
                 {% if user.is_authenticated %}
                     {% if user.is_staff %}
-                        <a href="{% url 'core_admin:dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'core_admin:dashboard' %}">Admin Dashboard</a>
-                        <a href="{% url 'core_admin:admin_campaign_queue' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'core_admin:admin_campaign_queue' %}">Campaign Queue</a>
+                        <a href="{% url 'core_admin:dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">Admin Dashboard</a>
+                        <a href="{% url 'core_admin:admin_campaign_queue' %}" class="px-3 py-2 rounded hover:bg-blue-700">Campaign Queue</a>
                     {% elif user.role == 'org_owner' %}
-                        <a href="{% url 'org_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'org_dashboard' %}">My Dashboard</a>
-                        <a href="{% url 'funding:campaign_new' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'funding:campaign_new' %}">Create Campaign</a>
+                        <a href="{% url 'org_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Dashboard</a>
+                        <a href="{% url 'org:campaign_new' %}" class="px-3 py-2 rounded hover:bg-blue-700">Create Campaign</a>
+                        <a href="{% url 'funding:campaign_list' %}" class="px-3 py-2 rounded hover:bg-blue-700">Campaigns</a>
+                        <a href="{% url 'org_settings' %}" class="px-3 py-2 rounded hover:bg-blue-700">Settings</a>
                     {% elif user.role == 'donor' %}
-                        <a href="{% url 'donor_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'donor_dashboard' %}">My Dashboard</a>
-                        <a href="{% url 'funding:campaign_list' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'funding:campaign_list' %}">Browse Campaigns</a>
-                        <a href="{% url 'funding:organisation_list' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'funding:organisation_list' %}">Browse Organisations</a>
+                        <a href="{% url 'donor_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Dashboard</a>
+                        <a href="{% url 'funding:campaign_list' %}" class="px-3 py-2 rounded hover:bg-blue-700">Browse Campaigns</a>
+                        <a href="{% url 'funding:organisation_list' %}" class="px-3 py-2 rounded hover:bg-blue-700">Browse Organisations</a>
                     {% endif %}
                     <span class="px-3 py-2 text-blue-200">Hi, {{ user.username }}!</span>
                     <form action="{% url 'logout' %}" method="post" class="inline">
@@ -37,7 +39,7 @@
                         <button type="submit" class="px-3 py-2 rounded hover:bg-blue-700 bg-transparent border-none text-white cursor-pointer">Logout</button>
                     </form>
                 {% else %}
-                    <a href="{% url 'accounts:login' %}" class="px-3 py-2 rounded hover:bg-blue-700 {% is_active 'accounts:login' %} ">Login / Register</a>
+                    <a href="{% url 'accounts:login' %}" class="px-3 py-2 rounded hover:bg-blue-700">Login / Register</a>
                 {% endif %}
             </div>
         </div>

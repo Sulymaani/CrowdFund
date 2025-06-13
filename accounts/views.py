@@ -84,7 +84,7 @@ class CustomLogoutView(LogoutView):
     def get_next_page(self):
         if 'next' in self.request.session:
             del self.request.session['next']
-        return reverse_lazy('home')
+        return reverse_lazy('accounts:login')
 
 
 def placeholder_view(request):

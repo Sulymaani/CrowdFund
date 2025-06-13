@@ -23,8 +23,13 @@ Includes all Unauthenticated URLs, plus:
 
 Includes all Unauthenticated URLs, plus:
 
-- `/dashboard/org/`: Organisation dashboard to view and manage their campaigns.
-- `/campaigns/new/`: Page to create a new campaign.
+- `/org/dashboard/`: Organisation dashboard to view and manage their campaigns.
+- `/org/campaigns/new/`: Page to create a new campaign.
+- `/org/campaigns/<id>/edit/`: Page to edit an existing campaign.
+- `/org/campaigns/<id>/close/`: Page to close an existing campaign.
+- `/org/donations/`: View all donations across campaigns.
+- `/org/donations/export/`: Export donations as CSV.
+- `/org/settings/`: Organization profile settings.
 - `/accounts/logout/`: Logout.
 - **Restriction**: Organisation owners cannot access the donation page (`/campaigns/<id>/donate/`).
 

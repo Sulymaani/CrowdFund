@@ -40,22 +40,39 @@ class StaffRequiredMixin(UserPassesTestMixin):
 
 class OrganisationOwnerRequiredMixin(UserPassesTestMixin):
     """
-    Mixin to ensure the user is an authenticated organisation owner and not staff.
-    Organisation does not need to be verified.
+    Mixin to ensure the user is an authenticated organisation owner with an active organization.
+    Blocks access if:
+    1. User is not authenticated
+    2. User is not an org_owner
+    3. User does not have an organization
+    4. User's organization is not active
+    5. User is staff (they should use admin views)
     """
     def test_func(self):
         user = self.request.user
-        return (
-            user.is_authenticated and
-            user.role == 'org_owner' and
-            user.organisation is not None and
-            not user.is_staff
-        )
+        if not user.is_authenticated or user.is_staff or user.role != 'org_owner':
+            return False
+        
+        # Check if user has an organization and it's active
+        if not hasattr(user, 'organisation') or user.organisation is None:
+            return False
+        
+        return user.organisation.is_active
 
     def handle_no_permission(self):
         if not self.request.user.is_authenticated:
             return redirect('login')
-        raise PermissionDenied("You must be an organisation owner to perform this action.")
+            
+        user = self.request.user
+        if user.role != 'org_owner':
+            messages.error(self.request, "You must be an organisation owner to access this page.")
+            raise PermissionDenied("You must be an organisation owner to access this page.")
+        
+        if hasattr(user, 'organisation') and user.organisation and not user.organisation.is_active:
+            messages.error(self.request, "Your organisation is inactive. Please contact an administrator.")
+            raise PermissionDenied("Your organisation is inactive. Please contact an administrator.")
+            
+        raise PermissionDenied("You do not have permission to access this page.")
 
 
 class PublicOrNonOrgOwnerRequiredMixin(UserPassesTestMixin):

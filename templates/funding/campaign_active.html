@@ -1,0 +1,113 @@
+{% extends 'base_org.html' %}
+{% load humanize %}
+
+{% block title %}{{ campaign.title }} - Active Campaign - CrowdFund{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-lg shadow-md">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ campaign.title }}</h1>
+        <p class="text-lg text-gray-600">Organisation: <span class="font-semibold">{{ campaign.organisation.name }}</span></p>
+        <div class="h-1 w-24 bg-indigo-600 mt-4"></div>
+    </div>
+
+    <!-- Campaign Status Badge -->
+    <div class="mb-6 flex gap-4 items-center">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Active Campaign
+        </span>
+        <span class="text-gray-600 text-sm">Created: {{ campaign.created_at|date:"d M Y" }}</span>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 mb-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-3">${{ total_raised|intcomma }} raised of ${{ campaign.goal|intcomma }} goal</h2>
+        
+        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+            {% if campaign.goal > 0 %}
+                {% widthratio total_raised campaign.goal 100 as percent %}
+                {% with progress=percent|default:0 %}
+                    <div class="bg-blue-600 h-2.5 rounded-full" {% if progress > 0 %}style="width: {{ progress }}%"{% else %}style="width: 0"{% endif %}></div>
+                {% endwith %}
+            {% else %}
+                <div class="bg-blue-600 h-2.5 rounded-full w-0"></div>
+            {% endif %}
+        </div>
+        
+        <div class="flex justify-between text-sm">
+            <div>
+                <span class="font-medium">{{ num_donations }}</span> donation{{ num_donations|pluralize }}
+            </div>
+            <div>
+                {% if campaign.goal > 0 %}
+                    {% widthratio total_raised campaign.goal 100 as percent %}
+                    <span class="font-medium">{{ percent }}%</span> of goal
+                {% else %}
+                    <span class="font-medium">0%</span> of goal
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaign Details -->
+    <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 mb-6">
+        <h3 class="text-lg font-bold mb-3">Campaign Details</h3>
+        <div class="prose max-w-none">
+            {{ campaign.description|linebreaks }}
+        </div>
+    </div>
+
+    <!-- Recent Donations -->
+    <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 mb-6">
+        <h3 class="text-lg font-bold mb-3">Recent Donations</h3>
+        {% if recent_donations %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-3 bg-gray-100 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Donor</th>
+                            <th class="px-4 py-3 bg-gray-100 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                            <th class="px-4 py-3 bg-gray-100 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for donation in recent_donations %}
+                            <tr>
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ donation.user.get_full_name|default:donation.user.username }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">${{ donation.amount|intcomma }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">{{ donation.created_at|date:"d M Y" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-gray-600">No donations yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="border-t border-gray-200 pt-5 mt-6">
+        <div class="mb-4">
+            <p class="text-sm text-gray-600">Once a campaign is active and collecting donations, its core details cannot be edited to maintain trust with your donors.</p>
+        </div>
+        <div class="flex flex-wrap gap-4">
+            <a href="{% url 'org_dashboard' %}" class="inline-flex items-center px-5 py-2.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back to Dashboard
+            </a>
+            <a href="{% url 'org:campaign_close' campaign.pk %}" class="inline-flex items-center px-5 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition duration-150">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                Close Campaign
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.0-beta] - 2025-06-12
+
+### Added
+- Organization owner dashboard polish:
+  - Added `OrganisationOwnerRequiredMixin` to enforce access restrictions for organization owners
+  - Implemented consistent Tailwind UI styling across all org owner pages
+  - Added flash messages and redirects after successful actions
+  - Organization settings page with logo upload and profile editing
+  - Donations list view with campaign filtering and CSV export
+  - Campaign close confirmation page
+  - Documentation for organization owner URLs and testing guidelines
+
+### Changed
+- Updated organization owner navigation with dedicated Settings link
+- Enforced business rules for campaigns (max 3 pending, min $100 goal, max $2M goal)
+
 ## [0.9.0] - 2025-06-12
 
 ### Fixed

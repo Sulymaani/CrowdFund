@@ -1,4 +1,5 @@
 from django import forms
+from django.core.validators import FileExtensionValidator
 from .models import Organisation, Campaign, Donation
 
 class OrganisationRegistrationForm(forms.ModelForm):
@@ -20,6 +21,36 @@ class OrganisationRegistrationForm(forms.ModelForm):
             'mission': "Briefly describe your organisation's mission and goals.",
             'contact_phone': 'A contact phone number for the organisation.'
         }
+
+class OrganisationSettingsForm(forms.ModelForm):
+    logo = forms.ImageField(
+        required=False,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png', 'gif'])],
+        widget=forms.FileInput(attrs={'class': 'hidden', 'id': 'logo-upload'}),
+        help_text='Upload a logo for your organization (JPG, PNG, or GIF)'
+    )
+    
+    banner = forms.ImageField(
+        required=False,
+        validators=[FileExtensionValidator(['jpg', 'jpeg', 'png'])],
+        widget=forms.FileInput(attrs={'class': 'hidden', 'id': 'banner-upload'}),
+        help_text='Upload a banner image for your organization profile (recommended size: 1200×300 pixels)'
+    )
+    
+    class Meta:
+        model = Organisation
+        fields = ['name', 'mission', 'website', 'logo', 'banner']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Organization Name'}),
+            'mission': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Describe your organization'}),
+            'website': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://www.example.com'}),
+        }
+        help_texts = {
+            'name': 'Your organization\'s official name',
+            'mission': 'A brief description of your organization\'s mission',
+            'website': 'Your organization\'s website (optional)',
+        }
+
 class CampaignForm(forms.ModelForm):
     class Meta:
         model = Campaign

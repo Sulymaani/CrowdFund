@@ -88,7 +88,7 @@ class CampaignCreationTests(TestCase):
             password='password123',
             role='donor'
         )
-        self.create_url = reverse('funding:campaign_new')
+        self.create_url = reverse('org:campaign_new')
 
     def test_org_owner_can_access_create_campaign_page(self):
         self.client.login(username='campaigncreator', password='password123')

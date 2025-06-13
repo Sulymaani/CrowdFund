@@ -1,126 +1,137 @@
-{% extends 'base.html' %}
+{% extends 'base_org.html' %}
+{% load humanize %}
 
 {% block title %}{{ page_title }} - CrowdFund{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
-<<<<<<< HEAD
         <div>
             <h1 class="text-3xl font-bold">{{ organisation.name }}</h1>
             <p class="text-gray-600">Campaign Dashboard</p>
         </div>
-        <a href="{% url 'funding:campaign_new' %}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+        <a href="{% url 'org:campaign_new' %}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
             + Create New Campaign
         </a>
     </div>
 
     <!-- KPI Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h3 class="text-lg font-semibold text-gray-700">Total Raised</h3>
-            <p class="text-3xl font-bold text-green-600">${{ total_raised }}</p>
-        </div>
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h3 class="text-lg font-semibold text-gray-700">Campaigns</h3>
-            <p class="text-3xl font-bold text-blue-600">{{ campaign_count }}</p>
-        </div>
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h3 class="text-lg font-semibold text-gray-700">Unique Donors</h3>
-            <p class="text-3xl font-bold text-purple-600">{{ unique_donors_count }}</p>
-        </div>
-    </div>
-
-=======
-        <h1 class="text-3xl font-bold">{{ page_title }}</h1>
-        <a href="{% url 'funding:campaign_new' %}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
-            Create New Campaign
-        </a>
-    </div>
-
-    <!-- KPIs -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-lg shadow-md">
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
             <h3 class="text-lg font-semibold text-gray-500">Total Raised</h3>
-            <p class="text-3xl font-bold text-gray-800">${{ kpis.total_raised|floatformat:2 }}</p>
+            <p class="text-3xl font-bold text-green-600">${{ kpis.total_raised|intcomma }}</p>
         </div>
-        <div class="bg-white p-6 rounded-lg shadow-md">
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
             <h3 class="text-lg font-semibold text-gray-500">Active Campaigns</h3>
-            <p class="text-3xl font-bold text-gray-800">{{ kpis.active_campaigns }}</p>
+            <p class="text-3xl font-bold text-blue-600">{{ kpis.active_campaigns }}</p>
         </div>
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <h3 class="text-lg font-semibold text-gray-500">Total Donors</h3>
-            <p class="text-3xl font-bold text-gray-800">{{ kpis.total_donors }}</p>
+        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500">
+            <h3 class="text-lg font-semibold text-gray-500">Unique Donors</h3>
+            <p class="text-3xl font-bold text-purple-600">{{ kpis.total_donors }}</p>
         </div>
     </div>
 
-    <h2 class="text-2xl font-semibold mb-4">My Campaigns</h2>
->>>>>>> b159ebea713ab9275604dd11ff8e712a671f3f30
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-semibold">My Campaigns</h2>
+        <div>
+            <a href="{% url 'org:campaigns' %}" class="text-blue-600 hover:text-blue-800 mr-4">View All Campaigns</a>
+            <a href="{% url 'org:donations_list' %}" class="text-blue-600 hover:text-blue-800">View Donations</a>
+        </div>
+    </div>
+    
     {% if campaigns %}
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <table class="min-w-full leading-normal">
-                <thead>
-                    <tr>
-<<<<<<< HEAD
-                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Campaign Title</th>
-=======
-                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Campaign</th>
->>>>>>> b159ebea713ab9275604dd11ff8e712a671f3f30
-                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Goal</th>
-                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Raised</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for campaign in campaigns %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
                         <tr>
-                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                <a href="{% url 'funding:campaign_detail' campaign.pk %}" class="text-blue-500 hover:text-blue-700">{{ campaign.title }}</a>
-                            </td>
-                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-<<<<<<< HEAD
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    {% if campaign.status == 'active' %}bg-green-100 text-green-800{% endif %}
-                                    {% if campaign.status == 'pending' %}bg-yellow-100 text-yellow-800{% endif %}
-                                    {% if campaign.status == 'completed' %}bg-blue-100 text-blue-800{% endif %}
-                                    {% if campaign.status == 'rejected' %}bg-red-100 text-red-800{% endif %}
-                                ">
-                                    {{ campaign.get_status_display }}
-                                </span>
-                            </td>
-                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${{ campaign.goal }}</td>
-                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">${{ campaign.total_raised }}</td>
-=======
-                                {% with status=campaign.status %}
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                        {% if status == 'active' %}bg-green-100 text-green-800{% endif %}
-                                        {% if status == 'pending' %}bg-yellow-100 text-yellow-800{% endif %}
-                                        {% if status == 'closed' %}bg-gray-100 text-gray-800{% endif %}
-                                        {% if status == 'rejected' %}bg-red-100 text-red-800{% endif %}
-                                        {% if status == 'draft' %}bg-blue-100 text-blue-800{% endif %}
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Campaign</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Goal</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Progress</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for campaign in campaigns %}
+                            <tr class="{% cycle 'bg-white' 'bg-gray-50' %}">
+                                <td class="px-5 py-5 border-b border-gray-200 text-sm">
+                                    <a href="{% url 'org:campaign_detail' campaign.pk %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                                        {{ campaign.title }}
+                                    </a>
+                                    <p class="text-gray-500 text-xs">Created: {{ campaign.created_at|date:"M d, Y" }}</p>
+                                </td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-sm">
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                        {% if campaign.status == 'active' %}bg-green-400 text-white{% endif %}
+                                        {% if campaign.status == 'pending' %}bg-yellow-400 text-white{% endif %}
+                                        {% if campaign.status == 'closed' %}bg-slate-500 text-white{% endif %}
+                                        {% if campaign.status == 'rejected' %}bg-red-400 text-white{% endif %}
+                                        {% if campaign.status == 'draft' %}bg-gray-400 text-white{% endif %}
                                     ">
                                         {{ campaign.get_status_display }}
                                     </span>
-                                {% endwith %}
-                            </td>
-                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                ${{ campaign.goal|floatformat:2 }}
-                            </td>
-                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                ${{ campaign.total_raised|floatformat:2 }}
-                            </td>
->>>>>>> b159ebea713ab9275604dd11ff8e712a671f3f30
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                                </td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-sm">
+                                    ${{ campaign.goal|intcomma }}
+                                </td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-sm">
+                                    <div class="flex items-center">
+                                        <div class="flex-1 mr-2">
+                                              {% with raised=campaign.total_raised|default:0 %}
+                                                <!-- Simple progress bar without inline styles -->
+                                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                                  {% if campaign.goal > 0 %}
+                                                    {% widthratio raised campaign.goal 100 as percent %}
+                                                    <div class="bg-blue-600 h-2.5 rounded-full" 
+                                                         {% if percent == 0 %}
+                                                           style="width: 0"
+                                                         {% elif percent <= 25 %}
+                                                           style="width: 25%"
+                                                         {% elif percent <= 50 %}
+                                                           style="width: 50%"
+                                                         {% elif percent <= 75 %}
+                                                           style="width: 75%"
+                                                         {% else %}
+                                                           style="width: 100%"
+                                                         {% endif %}
+                                                    ></div>
+                                                  {% else %}
+                                                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: 0"></div>
+                                                  {% endif %}
+                                                </div>
+                                                
+                                                <!-- Progress text -->
+                                                <div class="flex justify-between text-xs mt-1">
+                                                  <span>${{ raised|intcomma }}</span>
+                                                  <span>
+                                                    {% if campaign.goal > 0 %}
+                                                      {% widthratio raised campaign.goal 100 %}%
+                                                    {% else %}
+                                                      0%
+                                                    {% endif %}
+                                                  </span>
+                                                </div>
+                                              {% endwith %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-5 py-5 border-b border-gray-200 text-sm">
+                                    {% if campaign.status == 'draft' or campaign.status == 'rejected' %}
+                                    <a href="{% url 'org:campaign_edit' campaign.pk %}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                                    {% endif %}
+                                    
+                                    {% if campaign.status == 'active' %}
+                                    <a href="{% url 'org:campaign_close' campaign.pk %}" class="text-red-600 hover:text-red-900">Close</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     {% else %}
-<<<<<<< HEAD
-        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mt-6" role="alert">
-            <p class="font-bold">No Campaigns Yet</p>
-            <p>Your organisation has not created any campaigns. Click the 'Create New Campaign' button to get started!</p>
-=======
         <div class="text-center bg-white p-12 rounded-lg shadow-md">
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -128,11 +139,10 @@
             <h3 class="mt-2 text-sm font-medium text-gray-900">No campaigns yet</h3>
             <p class="mt-1 text-sm text-gray-500">Get started by creating your first campaign.</p>
             <div class="mt-6">
-                <a href="{% url 'funding:campaign_new' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                <a href="{% url 'org:campaign_new' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                     Create Campaign
                 </a>
             </div>
->>>>>>> b159ebea713ab9275604dd11ff8e712a671f3f30
         </div>
     {% endif %}
 </div>

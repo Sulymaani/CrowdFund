@@ -40,5 +40,32 @@ This project follows an **authentication-first** design. There are no public-fac
 - **Global Redirects**: Any attempt to access a protected page without being authenticated will result in a redirect to the landing page.
 - **Role-Based Dashboards**: Upon successful login, users are redirected to a dashboard specific to their role:
   - **Donors**: Redirected to their personal dashboard.
-  - **Organisation Owners**: Redirected to their organisation's dashboard (if verified) or a status page (if pending or rejected).
+  - **Organisation Owners**: Redirected to their organisation's dashboard.
   - **Admins**: Redirected to the admin console.
+
+## Organization Owner Tests
+
+When making changes to organization owner functionality, ensure the following tests pass:
+
+### Access Control Tests
+- Verify that `OrganisationOwnerRequiredMixin` is applied to all org owner views
+- Verify that non-org owners receive 403 responses when accessing org owner pages
+- Verify that org owners of inactive organizations receive 403 responses
+
+### Campaign Management Tests
+- Verify that org owners can create campaigns (max 3 pending)
+- Verify that org owners can edit campaigns with status "draft" or "rejected"
+- Verify that org owners can close active campaigns
+- Verify that campaign goals must be between $100 and $2,000,000
+- Verify proper campaign cover image upload path and validation
+
+### Donation Management Tests
+- Verify that org owners can view donations for their campaigns
+- Verify that org owners can export donations as CSV
+- Verify that org owners cannot donate to their own campaigns
+
+### Organization Settings Tests
+- Verify that org owners can update their organization profile
+- Verify that org owners can upload and update their organization logo
+
+See `docs/org_owner_url_matrix.md` for a complete list of organization owner URLs and templates.

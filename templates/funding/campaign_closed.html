@@ -1,0 +1,68 @@
+{% extends 'base_org.html' %}
+
+{% block title %}Campaign Closed - CrowdFund{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-lg shadow-md">
+    <div class="mb-6 text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+            <svg class="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Campaign Closed</h1>
+        <p class="text-lg text-gray-600 mb-6">Your campaign "{{ campaign.title }}" has been successfully closed.</p>
+    </div>
+
+    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-blue-700">
+                    <strong>Campaign Summary:</strong>
+                </p>
+                <div class="mt-2 text-sm text-blue-700">
+                    Your campaign raised a total of ${{ total_amount }} out of the ${{ campaign.goal }} goal.
+                    {% if total_amount > 0 %}
+                        Thank you for your successful fundraising efforts!
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="border-t border-gray-200 pt-6">
+        <h2 class="text-xl font-bold mb-4">Campaign Details</h2>
+        <p class="text-gray-700 mb-2"><strong>Title:</strong> {{ campaign.title }}</p>
+        <p class="text-gray-700 mb-2"><strong>Goal:</strong> ${{ campaign.goal }}</p>
+        <p class="text-gray-700 mb-2"><strong>Created:</strong> {{ campaign.created_at|date:"d M Y" }}</p>
+    </div>
+
+    <div class="prose max-w-none mt-6 mb-6 border-t border-gray-200 pt-6">
+        <h3 class="text-lg font-bold">Description</h3>
+        {{ campaign.description|linebreaks }}
+    </div>
+
+    <div class="border-t border-gray-200 pt-6 mt-6">
+        <h3 class="text-lg font-bold mb-3">What can I do now?</h3>
+        <ul class="list-disc pl-5 space-y-2 text-gray-700">
+            <li>Create a new campaign for your next fundraising effort</li>
+            <li>View donation details for this campaign</li>
+            <li>Export donation records for your accounting</li>
+        </ul>
+    </div>
+
+    <div class="flex space-x-4 mt-8">
+        <a href="{% url 'org_dashboard' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline">
+            Return to Dashboard
+        </a>
+        <a href="{% url 'org:campaign_new' %}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline">
+            Create New Campaign
+        </a>
+    </div>
+</div>
+{% endblock %}

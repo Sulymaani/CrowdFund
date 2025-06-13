@@ -1,15 +1,19 @@
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
 from django.urls import reverse_lazy
-from django.db.models import Sum, Value
+from django.db.models import Sum, Value, F, Q
 from django.db.models.functions import Coalesce
+from django.http import HttpResponse
+import csv
+from datetime import datetime, timedelta
 from django.contrib import messages
-from django.views.generic import ListView, DetailView, CreateView, View, TemplateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, View, TemplateView
+from django.db.models import Prefetch
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from core.mixins import DonorRequiredMixin, OrganisationOwnerRequiredMixin
 from accounts.models import CustomUser
 from .models import Campaign, Organisation, Donation
-from .forms import CampaignForm, DonationForm
+from .forms import CampaignForm, DonationForm, OrganisationSettingsForm
 
 
 class CampaignListView(ListView):
@@ -23,11 +27,36 @@ class CampaignListView(ListView):
 
 class CampaignDetailView(DetailView):
     model = Campaign
-    template_name = 'funding/campaign_detail.html'
     context_object_name = 'campaign'
+    
+    def get_template_names(self):
+        # Select template based on campaign status and user role
+        campaign = self.get_object()
+        user = self.request.user
+        
+        if user.is_authenticated and user.role == 'org_owner' and hasattr(user, 'organisation'):
+            # Is this the org owner's own campaign?
+            if campaign.organisation.id == user.organisation.id:
+                if campaign.status == 'rejected':
+                    return ['funding/campaign_rejected.html']
+                elif campaign.status == 'closed':
+                    return ['funding/campaign_closed.html']
+                elif campaign.status == 'active':
+                    return ['funding/campaign_active.html']
+        
+        # Default template for active campaigns and other users
+        return ['funding/campaign_detail.html']
 
     def get_queryset(self):
-        return Campaign.objects.filter(status='active')
+        # Show active campaigns to public, but allow org owners to see their own campaigns regardless of status
+        user = self.request.user
+        if user.is_authenticated and user.role == 'org_owner' and hasattr(user, 'organisation'):
+            # Get campaigns where user is the org owner
+            org_campaigns = Campaign.objects.filter(organisation=user.organisation)
+            return org_campaigns
+        else:
+            # Others only see active campaigns
+            return Campaign.objects.filter(status='active')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -41,6 +70,12 @@ class CampaignDetailView(DetailView):
 
         context['total_donations'] = total_donations
         context['width_percentage'] = width_percentage
+        context['total_amount'] = total_donations  # For closed campaign template
+        context['total_raised'] = total_donations  # For active campaign template
+        
+        # For active campaign template
+        context['num_donations'] = campaign.donations.count()
+        context['recent_donations'] = campaign.donations.order_by('-created_at')[:5]
 
         user = self.request.user
         if user.is_authenticated and hasattr(user, 'role') and user.role == 'donor':
@@ -75,14 +110,52 @@ class CampaignCreateView(OrganisationOwnerRequiredMixin, CreateView):
     model = Campaign
     form_class = CampaignForm
     template_name = 'funding/campaign_form.html'
+    success_url = reverse_lazy('org_dashboard')
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Enforce max pending campaigns limit
+        user = request.user
+        if user.is_authenticated and hasattr(user, 'organisation'):
+            pending_count = Campaign.objects.filter(
+                organisation=user.organisation,
+                status='pending'
+            ).count()
+            if pending_count >= 3:
+                messages.error(request, 'You can have a maximum of 3 pending campaigns. Please wait for admin approval before submitting more.')
+                return redirect('org_dashboard')
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        campaign = form.save(commit=False)
-        campaign.organisation = self.request.user.organisation
-        campaign.creator = self.request.user
-        campaign.save()
-        messages.success(self.request, f'Your campaign "{campaign.title}" has been submitted and is pending review.')
-        return redirect(reverse_lazy('org_dashboard'))
+        # Check if this same campaign was recently submitted (prevent duplicates)
+        title = form.cleaned_data.get('title')
+        recent_duplicate = Campaign.objects.filter(
+            organisation=self.request.user.organisation,
+            title=title,
+            created_at__gte=datetime.now() - timedelta(minutes=5)
+        ).exists()
+        
+        if recent_duplicate:
+            messages.warning(
+                self.request, 
+                f'A campaign with the title "{title}" was already submitted. Please check your campaigns list.'
+            )
+            return redirect('org_dashboard')
+            
+        # Set required fields
+        form.instance.organisation = self.request.user.organisation
+        form.instance.creator = self.request.user
+        
+        # Enforce goal limits
+        if form.cleaned_data['goal'] < 100:
+            form.add_error('goal', 'Campaign goal must be at least $100.')
+            return self.form_invalid(form)
+        if form.cleaned_data['goal'] > 2000000:
+            form.add_error('goal', 'Campaign goal cannot exceed $2,000,000.')
+            return self.form_invalid(form)
+            
+        response = super().form_valid(form)
+        messages.success(self.request, f'Your campaign "{form.instance.title}" has been submitted and is pending review.')
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -119,11 +192,38 @@ class DonorDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         return context
 
 
-class OrgDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    template_name = 'funding/org_dashboard.html'
+class OrgCampaignsListView(OrganisationOwnerRequiredMixin, ListView):
+    model = Campaign
+    template_name = 'funding/org_campaigns.html'
+    context_object_name = 'campaigns'
+    
+    def get_queryset(self):
+        # Filter campaigns by the org owner's organization
+        org = self.request.user.organisation
+        status_filter = self.request.GET.get('status')
+        
+        # Base queryset with total donation amounts
+        queryset = Campaign.objects.filter(organisation=org)
+        
+        # Apply status filter if provided
+        if status_filter and status_filter in ['draft', 'pending', 'active', 'rejected', 'closed']:
+            queryset = queryset.filter(status=status_filter)
+            
+        # Annotate with total raised
+        return queryset.annotate(
+            total_raised=Coalesce(Sum('donations__amount'), Value(0))
+        ).order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'My Campaigns'
+        # Add status for tab highlighting
+        context['current_status'] = self.request.GET.get('status', 'all')
+        return context
 
-    def test_func(self):
-        return self.request.user.role == 'org_owner'
+
+class OrgDashboardView(OrganisationOwnerRequiredMixin, TemplateView):
+    template_name = 'funding/org_dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -147,3 +247,261 @@ class OrgDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             total_raised=Coalesce(Sum('donations__amount'), Value(0))
         ).order_by('-created_at')
         return context
+
+
+class CampaignEditView(OrganisationOwnerRequiredMixin, UpdateView):
+    model = Campaign
+    form_class = CampaignForm
+    template_name = 'funding/campaign_form.html'
+    
+    def get_queryset(self):
+        # Only allow editing of draft or rejected campaigns
+        return Campaign.objects.filter(
+            organisation=self.request.user.organisation,
+            status__in=['draft', 'rejected']
+        )
+    
+    def get_success_url(self):
+        return reverse_lazy('funding:campaign_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        # Enforce goal limits
+        if form.cleaned_data['goal'] < 100:
+            form.add_error('goal', 'Campaign goal must be at least $100.')
+            return self.form_invalid(form)
+        if form.cleaned_data['goal'] > 2000000:
+            form.add_error('goal', 'Campaign goal cannot exceed $2,000,000.')
+            return self.form_invalid(form)
+            
+        response = super().form_valid(form)
+        messages.success(self.request, f'Your campaign "{self.object.title}" has been updated and is pending review.')
+        return response
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Edit Campaign'
+        context['is_edit'] = True
+        return context
+
+
+class CampaignCloseView(OrganisationOwnerRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        campaign = get_object_or_404(Campaign, pk=kwargs['pk'], organisation=request.user.organisation)
+        
+        # Only allow closing active campaigns
+        if campaign.status != 'active':
+            messages.error(request, 'Only active campaigns can be closed.')
+            return redirect('funding:campaign_detail', pk=campaign.pk)
+            
+        return render(request, 'funding/campaign_close.html', {
+            'campaign': campaign,
+            'page_title': f'Close Campaign: {campaign.title}'
+        })
+    
+    def post(self, request, *args, **kwargs):
+        campaign = get_object_or_404(Campaign, pk=kwargs['pk'], organisation=request.user.organisation)
+        
+        if campaign.status != 'active':
+            messages.error(request, 'Only active campaigns can be closed.')
+        else:
+            campaign.status = 'closed'
+            campaign.save()
+            messages.success(request, f'Your campaign "{campaign.title}" has been closed.')
+            
+        return redirect('org_dashboard')
+
+
+class DonationsListView(OrganisationOwnerRequiredMixin, ListView):
+    template_name = 'funding/donations_list.html'
+    context_object_name = 'donations'
+    paginate_by = 25
+    
+    def get_queryset(self):
+        org = self.request.user.organisation
+        # Only show donations for active campaigns
+        queryset = Donation.objects.filter(campaign__organisation=org, campaign__status='active')
+        
+        # Handle search filter if provided
+        search_query = self.request.GET.get('q')
+        if search_query:
+            queryset = queryset.filter(
+                Q(campaign__title__icontains=search_query) | 
+                Q(user__username__icontains=search_query)
+            )
+            
+        # Handle campaign filter if provided
+        campaign_filter = self.request.GET.get('campaign')
+        if campaign_filter:
+            queryset = queryset.filter(campaign__pk=campaign_filter)
+        
+        return queryset.select_related('campaign', 'user').order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Donations'
+        context['total_amount'] = self.get_queryset().aggregate(Sum('amount'))['amount__sum'] or 0
+        context['campaigns'] = Campaign.objects.filter(organisation=self.request.user.organisation)
+        context['search_query'] = self.request.GET.get('q', '')
+        context['campaign_filter'] = self.request.GET.get('campaign', '')
+        return context
+
+
+class OrgCampaignDetailView(OrganisationOwnerRequiredMixin, DetailView):
+    model = Campaign
+    context_object_name = 'campaign'
+    template_name = 'funding/campaign_active.html'  # Default template
+    
+    def get_queryset(self):
+        # Only allow org owners to see their own campaigns
+        return Campaign.objects.filter(organisation=self.request.user.organisation)
+    
+    def get_template_names(self):
+        # Select template based on campaign status
+        campaign = self.get_object()
+        
+        if campaign.status == 'rejected':
+            return ['funding/campaign_rejected.html']
+        elif campaign.status == 'closed':
+            return ['funding/campaign_closed.html']
+        elif campaign.status == 'active':
+            return ['funding/campaign_active.html']
+        else:  # draft or pending
+            return ['funding/campaign_active.html']
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        campaign = self.get_object()
+        total_donations = campaign.donations.aggregate(total=Sum('amount'))['total'] or 0
+
+        if campaign.goal > 0:
+            width_percentage = min(int((total_donations / campaign.goal) * 100), 100)
+        else:
+            width_percentage = 0
+
+        context['total_donations'] = total_donations
+        context['width_percentage'] = width_percentage
+        context['total_amount'] = total_donations
+        context['total_raised'] = total_donations
+        
+        # Only show donation details for active campaigns
+        if campaign.status == 'active':
+            context['num_donations'] = campaign.donations.count()
+            context['recent_donations'] = campaign.donations.order_by('-created_at')[:5]
+        else:
+            context['num_donations'] = 0
+            context['recent_donations'] = []
+            
+        context['page_title'] = 'Campaign Details'
+        
+        return context
+
+
+class DonationDetailView(LoginRequiredMixin, DetailView):
+    model = Donation
+    context_object_name = 'donation'
+    template_name = 'funding/donation_detail.html'
+    
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == 'donor':
+            # Donors can only see their own donations
+            return Donation.objects.filter(user=user)
+        else:
+            # Admins can see all donations, org_owners handled by OrgDonationDetailView
+            return Donation.objects.all() if user.is_staff else Donation.objects.none()
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Donation Details'
+        return context
+
+
+class OrgDonationDetailView(OrganisationOwnerRequiredMixin, DetailView):
+    model = Donation
+    context_object_name = 'donation'
+    template_name = 'funding/org_donation_detail.html'
+    slug_field = 'reference_number'
+    slug_url_kwarg = 'reference_number'
+    
+    def get_queryset(self):
+        # Allow viewing donations for any campaign owned by this organization
+        return Donation.objects.filter(
+            campaign__organisation=self.request.user.organisation
+        )
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Donation Details'
+        return context
+
+
+class ExportDonationsCSVView(OrganisationOwnerRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        org = request.user.organisation
+        queryset = Donation.objects.filter(campaign__organisation=org)
+        
+        # Handle filters if provided (same as in DonationsListView)
+        search_query = request.GET.get('q')
+        if search_query:
+            queryset = queryset.filter(
+                Q(campaign__title__icontains=search_query) | 
+                Q(user__username__icontains=search_query)
+            )
+            
+        campaign_filter = request.GET.get('campaign')
+        if campaign_filter:
+            queryset = queryset.filter(campaign__pk=campaign_filter)
+        
+        # Prepare CSV response
+        response = HttpResponse(content_type='text/csv')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        response['Content-Disposition'] = f'attachment; filename="donations_{timestamp}.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Date', 'Campaign', 'Donor', 'Amount'])
+        
+        for donation in queryset.select_related('campaign', 'user'):
+            writer.writerow([
+                donation.created_at.strftime('%Y-%m-%d %H:%M'),
+                donation.campaign.title,
+                donation.user.username,
+                donation.amount
+            ])
+            
+        return response
+
+
+class OrganisationSettingsView(OrganisationOwnerRequiredMixin, View):
+    template_name = 'funding/org_settings.html'
+    
+    def get(self, request, *args, **kwargs):
+        organisation = request.user.organisation
+        edit_mode = request.GET.get('edit', 'false') == 'true'
+        
+        form = None
+        if edit_mode:
+            form = OrganisationSettingsForm(instance=organisation)
+        
+        return render(request, self.template_name, {
+            'form': form,
+            'edit_mode': edit_mode,
+            'page_title': 'Organisation Settings',
+            'organisation': organisation
+        })
+    
+    def post(self, request, *args, **kwargs):
+        organisation = request.user.organisation
+        form = OrganisationSettingsForm(request.POST, request.FILES, instance=organisation)
+        
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Your organisation profile has been updated.')
+            # Redirect to view mode after successful update
+            return redirect('org:settings')
+        
+        return render(request, self.template_name, {
+            'form': form,
+            'edit_mode': True,
+            'page_title': 'Organisation Settings',
+            'organisation': organisation
+        })

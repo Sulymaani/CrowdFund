@@ -3,15 +3,39 @@
 {% block title %}Campaign Rejected - CrowdFund{% endblock %}
 
 {% block content %}
-<div class="bg-white p-8 rounded-lg shadow-md">
-    <div class="mb-6 text-center">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
-            <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
+<!-- Breadcrumbs navigation -->
+<nav class="bg-gray-50 p-3 mb-5 rounded-lg shadow-sm" aria-label="Breadcrumb">
+  <ol class="flex flex-wrap text-sm">
+    <li class="flex items-center">
+      <a href="{% url 'org:dashboard' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+        Dashboard
+      </a>
+      <span class="text-gray-400 mx-2">/</span>
+    </li>
+    <li class="flex items-center">
+      <a href="{% url 'org:campaigns' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+        Campaigns
+      </a>
+      <span class="text-gray-400 mx-2">/</span>
+    </li>
+    <li>
+      <span class="text-gray-700 font-medium">{{ campaign.title|truncatechars:30 }}</span>
+    </li>
+  </ol>
+</nav>
+
+<div class="bg-white p-8 rounded-lg shadow-md border border-gray-100">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">{{ campaign.title }}</h1>
+        
+        <!-- Status Badge -->
+        <div class="mb-6 flex items-center">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+                <span class="h-2 w-2 rounded-full bg-red-500 mr-1"></span>
+                Rejected
+            </span>
+            <span class="ml-2 text-sm text-gray-500">Campaign was not approved by our team</span>
         </div>
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">Campaign Rejected</h1>
-        <p class="text-lg text-gray-600 mb-6">Your campaign "{{ campaign.title }}" has been reviewed and rejected.</p>
     </div>
 
     <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
@@ -59,19 +83,29 @@
     </div>
 
     <div class="flex flex-wrap gap-4 mt-8">
-        <a href="{% url 'org:campaign_edit' campaign.pk %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline transition duration-150">
-            <div class="flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                </svg>
-                Edit Campaign
-            </div>
+        <a href="{% url 'org:campaigns' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Campaigns
         </a>
-        <a href="{% url 'org_dashboard' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline transition duration-150">
-            Return to Dashboard
-        </a>
-        <a href="{% url 'org:campaign_new' %}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline transition duration-150">
+        <a href="{% url 'org:campaign_new' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition duration-200">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
             Create New Campaign
+        </a>
+        <a href="{% url 'org:campaign_edit' campaign.pk %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none transition duration-200">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Edit This Campaign
+        </a>
+        <a href="{% url 'org:campaign_delete' campaign.pk %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none transition duration-200">
+            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            </svg>
+            Delete Campaign
         </a>
     </div>
 </div>

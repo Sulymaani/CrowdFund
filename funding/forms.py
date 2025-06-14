@@ -56,10 +56,20 @@ class CampaignForm(forms.ModelForm):
         model = Campaign
         fields = ['title', 'description', 'cover_image', 'goal']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'}),
-            'description': forms.Textarea(attrs={'rows': 4, 'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'}),
-            'cover_image': forms.ClearableFileInput(attrs={'class': 'mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100'}),
-            'goal': forms.NumberInput(attrs={'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm', 'min': '1'}),
+            'title': forms.TextInput(attrs={
+                'class': 'block w-full px-4 py-2 mt-2 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+            }),
+            'description': forms.Textarea(attrs={
+                'rows': 6, 
+                'class': 'block w-full px-4 py-2 mt-2 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+            }),
+            'cover_image': forms.ClearableFileInput(attrs={
+                'class': 'block w-full text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100'
+            }),
+            'goal': forms.NumberInput(attrs={
+                'class': 'block w-full pl-8 pr-4 py-2 mt-2 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500', 
+                'min': '100'
+            }),
         }
         help_texts = {
             'title': 'The title of your fundraising campaign.',
@@ -67,6 +77,15 @@ class CampaignForm(forms.ModelForm):
             'cover_image': 'Upload a compelling cover image for your campaign page.',
             'goal': 'The target amount you aim to raise (in whole currency units).',
         }
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make sure the fields are properly initialized with instance data
+        if self.instance and self.instance.pk:
+            if not self.is_bound:  # Only set initial if the form is not bound to POST data
+                self.fields['title'].initial = self.instance.title
+                self.fields['description'].initial = self.instance.description
+                self.fields['goal'].initial = self.instance.goal
 
 
 class CampaignAdminReviewForm(forms.ModelForm):

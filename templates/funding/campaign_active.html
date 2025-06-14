@@ -4,24 +4,48 @@
 {% block title %}{{ campaign.title }} - Active Campaign - CrowdFund{% endblock %}
 
 {% block content %}
-<div class="bg-white p-8 rounded-lg shadow-md">
-    <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ campaign.title }}</h1>
-        <p class="text-lg text-gray-600">Organisation: <span class="font-semibold">{{ campaign.organisation.name }}</span></p>
-        <div class="h-1 w-24 bg-indigo-600 mt-4"></div>
-    </div>
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav class="bg-gray-50 p-3 mb-5 rounded-lg shadow-sm" aria-label="Breadcrumb">
+        <ol class="flex flex-wrap text-sm">
+            <li class="flex items-center">
+                <a href="{% url 'org:dashboard' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                    Dashboard
+                </a>
+                <span class="text-gray-400 mx-2">/</span>
+            </li>
+            <li class="flex items-center">
+                <a href="{% url 'org:campaigns' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                    Campaigns
+                </a>
+                <span class="text-gray-400 mx-2">/</span>
+            </li>
+            <li>
+                <span class="text-gray-700 font-medium">{{ campaign.title }}</span>
+            </li>
+        </ol>
+    </nav>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h1 class="text-3xl font-bold mb-4">{{ campaign.title }}</h1>
 
-    <!-- Campaign Status Badge -->
-    <div class="mb-6 flex gap-4 items-center">
-        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            Active Campaign
-        </span>
-        <span class="text-gray-600 text-sm">Created: {{ campaign.created_at|date:"d M Y" }}</span>
-    </div>
-
+        <!-- Status Badge -->
+        <div class="mb-6 flex items-center">
+            {% if campaign.status == 'pending' %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                <span class="h-2 w-2 rounded-full bg-yellow-500 mr-1"></span>
+                Pending Review
+            </span>
+            <span class="ml-2 text-sm text-gray-500">Campaign is awaiting administrator approval</span>
+            {% else %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                <span class="h-2 w-2 rounded-full bg-green-500 mr-1 animate-pulse"></span>
+                Active
+            </span>
+            <span class="ml-2 text-sm text-gray-500">Campaign is live and accepting donations</span>
+            {% endif %}
+        </div>
+        
     <!-- Progress Bar -->
     <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 mb-6">
         <h2 class="text-xl font-bold text-gray-800 mb-3">${{ total_raised|intcomma }} raised of ${{ campaign.goal|intcomma }} goal</h2>
@@ -95,15 +119,15 @@
             <p class="text-sm text-gray-600">Once a campaign is active and collecting donations, its core details cannot be edited to maintain trust with your donors.</p>
         </div>
         <div class="flex flex-wrap gap-4">
-            <a href="{% url 'org_dashboard' %}" class="inline-flex items-center px-5 py-2.5 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
+            <a href="{% url 'org:campaigns' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition duration-150">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
-                Back to Dashboard
+                Back to Campaigns
             </a>
-            <a href="{% url 'org:campaign_close' campaign.pk %}" class="inline-flex items-center px-5 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 transition duration-150">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            <a href="{% url 'org:campaign_close' campaign.pk %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none transition duration-200">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
                 </svg>
                 Close Campaign
             </a>

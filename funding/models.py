@@ -28,6 +28,7 @@ class Campaign(models.Model):
         ('pending', 'Pending'),
         ('active', 'Active'),
         ('rejected', 'Rejected'),
+        ('closed', 'Closed'),
     ]
 
     organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name='campaigns')

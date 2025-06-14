@@ -34,15 +34,27 @@ class CampaignDetailView(DetailView):
         campaign = self.get_object()
         user = self.request.user
         
+        # Debug status and template selection
+        print(f"DEBUG: Campaign ID: {campaign.id}, Title: {campaign.title}, Status: '{campaign.status}'")
+        
         if user.is_authenticated and user.role == 'org_owner' and hasattr(user, 'organisation'):
             # Is this the org owner's own campaign?
             if campaign.organisation.id == user.organisation.id:
                 if campaign.status == 'rejected':
+                    print(f"DEBUG: Selected template: campaign_rejected.html")
                     return ['funding/campaign_rejected.html']
                 elif campaign.status == 'closed':
+                    print(f"DEBUG: Selected template: campaign_closed.html")
                     return ['funding/campaign_closed.html']
                 elif campaign.status == 'active':
+                    print(f"DEBUG: Selected template: campaign_active.html")
                     return ['funding/campaign_active.html']
+                elif campaign.status == 'pending':
+                    print(f"DEBUG: Selected template: campaign_pending.html")
+                    return ['funding/campaign_pending.html']
+                    
+        # Debug fallback template
+        print(f"DEBUG: Fallback to default template: campaign_detail.html")
         
         # Default template for active campaigns and other users
         return ['funding/campaign_detail.html']
@@ -103,14 +115,14 @@ class CreateDonationView(LoginRequiredMixin, DonorRequiredMixin, View):
         else:
             messages.error(request, 'There was an error with your donation. Please check the amount.')
 
-        return redirect('funding:campaign_detail', pk=campaign.pk)
+        return redirect('org:campaign_detail', pk=campaign.pk)
 
 
 class CampaignCreateView(OrganisationOwnerRequiredMixin, CreateView):
     model = Campaign
     form_class = CampaignForm
     template_name = 'funding/campaign_form.html'
-    success_url = reverse_lazy('org_dashboard')
+    success_url = reverse_lazy('org:dashboard')
     
     def dispatch(self, request, *args, **kwargs):
         # Enforce max pending campaigns limit
@@ -122,24 +134,27 @@ class CampaignCreateView(OrganisationOwnerRequiredMixin, CreateView):
             ).count()
             if pending_count >= 3:
                 messages.error(request, 'You can have a maximum of 3 pending campaigns. Please wait for admin approval before submitting more.')
-                return redirect('org_dashboard')
+                return redirect('org:dashboard')
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        # Check if this same campaign was recently submitted (prevent duplicates)
-        title = form.cleaned_data.get('title')
-        recent_duplicate = Campaign.objects.filter(
-            organisation=self.request.user.organisation,
-            title=title,
-            created_at__gte=datetime.now() - timedelta(minutes=5)
-        ).exists()
+        # Use transaction.atomic to prevent race conditions
+        from django.db import transaction
         
-        if recent_duplicate:
-            messages.warning(
-                self.request, 
-                f'A campaign with the title "{title}" was already submitted. Please check your campaigns list.'
-            )
-            return redirect('org_dashboard')
+        with transaction.atomic():
+            # Check if this same campaign was recently submitted (prevent duplicates)
+            title = form.cleaned_data.get('title')
+            recent_duplicate = Campaign.objects.filter(
+                organisation=self.request.user.organisation,
+                title=title
+            ).exists()
+            
+            if recent_duplicate:
+                messages.warning(
+                    self.request, 
+                    f'A campaign with the title "{title}" already exists. Please use a different title or check your campaigns list.'
+                )
+                return self.form_invalid(form)
             
         # Set required fields
         form.instance.organisation = self.request.user.organisation
@@ -196,6 +211,13 @@ class OrgCampaignsListView(OrganisationOwnerRequiredMixin, ListView):
     model = Campaign
     template_name = 'funding/org_campaigns.html'
     context_object_name = 'campaigns'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Debug campaign statuses in list
+        for campaign in context['campaigns']:
+            print(f"LIST DEBUG: Campaign {campaign.id} - {campaign.title} has status '{campaign.status}'")
+        return context
     
     def get_queryset(self):
         # Filter campaigns by the org owner's organization
@@ -255,14 +277,16 @@ class CampaignEditView(OrganisationOwnerRequiredMixin, UpdateView):
     template_name = 'funding/campaign_form.html'
     
     def get_queryset(self):
-        # Only allow editing of draft or rejected campaigns
-        return Campaign.objects.filter(
-            organisation=self.request.user.organisation,
-            status__in=['draft', 'rejected']
+        # Allow editing of any campaign belonging to this organization for now
+        # We'll add status restrictions back once we fix the core issue
+        queryset = Campaign.objects.filter(
+            organisation=self.request.user.organisation
         )
+        print(f"DEBUG: EditView queryset has {queryset.count()} items with pk={self.kwargs.get('pk')}")
+        return queryset
     
     def get_success_url(self):
-        return reverse_lazy('funding:campaign_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy('org:campaign_detail', kwargs={'pk': self.object.pk})
     
     def form_valid(self, form):
         # Enforce goal limits
@@ -272,17 +296,52 @@ class CampaignEditView(OrganisationOwnerRequiredMixin, UpdateView):
         if form.cleaned_data['goal'] > 2000000:
             form.add_error('goal', 'Campaign goal cannot exceed $2,000,000.')
             return self.form_invalid(form)
+        
+        # Check if any changes were made to the campaign
+        original = Campaign.objects.get(pk=self.object.pk)
+        has_changes = False
+        
+        # Compare each field to see if it changed
+        if form.cleaned_data['title'] != original.title:
+            has_changes = True
+        elif form.cleaned_data['description'] != original.description:
+            has_changes = True
+        elif form.cleaned_data['goal'] != original.goal:
+            has_changes = True
+        elif form.cleaned_data['cover_image'] and form.cleaned_data['cover_image'] != original.cover_image:
+            has_changes = True
+        
+        # If no changes were made, don't submit and show a message
+        if not has_changes:
+            messages.warning(self.request, 'No changes detected. Please make changes before resubmitting the campaign.')
+            return self.render_to_response(self.get_context_data(form=form))
+        
+        # Always set status to 'pending' when editing a campaign
+        # This ensures rejected campaigns go back for admin review
+        self.object = form.save(commit=False)
+        self.object.status = 'pending'
+        self.object.save()
             
-        response = super().form_valid(form)
         messages.success(self.request, f'Your campaign "{self.object.title}" has been updated and is pending review.')
-        return response
+        return super().form_valid(form)
+    
+    def post(self, request, *args, **kwargs):
+        """Override post method to ensure proper object handling"""
+        try:
+            self.object = self.get_object()
+            print(f"DEBUG: Found object for editing with pk={self.object.pk}, status={self.object.status}")
+            return super().post(request, *args, **kwargs)
+        except Exception as e:
+            print(f"DEBUG: Error in CampaignEditView.post: {e}")
+            messages.error(request, f"Error processing form: {str(e)}")
+            return redirect('org:campaigns')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'Edit Campaign'
         context['is_edit'] = True
+        context['organisation_name'] = self.request.user.organisation.name
         return context
-
 
 class CampaignCloseView(OrganisationOwnerRequiredMixin, View):
     def get(self, request, *args, **kwargs):
@@ -290,9 +349,14 @@ class CampaignCloseView(OrganisationOwnerRequiredMixin, View):
         
         # Only allow closing active campaigns
         if campaign.status != 'active':
-            messages.error(request, 'Only active campaigns can be closed.')
-            return redirect('funding:campaign_detail', pk=campaign.pk)
-            
+            # Don't show an error for closed campaigns - they're already closed
+            if campaign.status == 'closed':
+                # Redirect to the closed campaign view instead
+                return redirect('org:campaign_detail', pk=campaign.pk)
+            else:
+                messages.error(request, 'Only active campaigns can be closed.')
+                return redirect('funding:campaign_detail', pk=campaign.pk)
+                
         return render(request, 'funding/campaign_close.html', {
             'campaign': campaign,
             'page_title': f'Close Campaign: {campaign.title}'
@@ -303,12 +367,111 @@ class CampaignCloseView(OrganisationOwnerRequiredMixin, View):
         
         if campaign.status != 'active':
             messages.error(request, 'Only active campaigns can be closed.')
+            return redirect('org:campaign_detail', pk=campaign.pk)
         else:
             campaign.status = 'closed'
             campaign.save()
             messages.success(request, f'Your campaign "{campaign.title}" has been closed.')
-            
+            # Fix: Use the fully qualified URL name with namespace to avoid redirect errors
+            return redirect('org:campaigns')
+        
+        # This line should never be reached, but just in case
         return redirect('org_dashboard')
+
+
+class CampaignReactivateView(OrganisationOwnerRequiredMixin, View):
+    """
+    View for reactivating a closed campaign.
+    This allows organizations to run a campaign again after it was closed.
+    """
+    def get(self, request, *args, **kwargs):
+        campaign = get_object_or_404(Campaign, pk=kwargs['pk'], organisation=request.user.organisation)
+        
+        # Only allow reactivating closed campaigns
+        if campaign.status != 'closed':
+            if campaign.status == 'active':
+                messages.info(request, 'This campaign is already active.')
+            else:
+                messages.error(request, f'Only closed campaigns can be reactivated. Current status: {campaign.get_status_display()}')
+            
+            return redirect('org:campaign_detail', pk=campaign.pk)
+        
+        # Show confirmation page
+        return render(request, 'funding/campaign_reactivate.html', {
+            'campaign': campaign,
+            'page_title': f'Reactivate Campaign: {campaign.title}'
+        })
+    
+    def post(self, request, *args, **kwargs):
+        campaign = get_object_or_404(Campaign, pk=kwargs['pk'], organisation=request.user.organisation)
+        
+        if campaign.status != 'closed':
+            messages.error(request, 'Only closed campaigns can be reactivated.')
+            return redirect('org:campaign_detail', pk=campaign.pk)
+        else:
+            campaign.status = 'active'
+            campaign.save()
+            messages.success(request, f'Your campaign "{campaign.title}" has been reactivated and is now accepting donations.')
+            return redirect('org:campaign_detail', pk=campaign.pk)
+        
+        # This line should never be reached, but just in case
+        return redirect('org:dashboard')
+
+
+class CampaignDeleteView(OrganisationOwnerRequiredMixin, View):
+    """
+    View for deleting a campaign.
+    Only closed, rejected, or pending campaigns can be deleted.
+    """
+    def get(self, request, *args, **kwargs):
+        campaign = get_object_or_404(Campaign, pk=kwargs['pk'], organisation=request.user.organisation)
+        
+        # Only allow deleting campaigns that are closed, rejected, or pending
+        if campaign.status not in ['closed', 'rejected', 'pending']:
+            messages.error(request, 'Only closed, rejected, or pending campaigns can be deleted.')
+            return redirect('org:campaign_detail', pk=campaign.pk)
+        
+        # Show confirmation page
+        return render(request, 'funding/campaign_delete.html', {
+            'campaign': campaign,
+            'page_title': f'Delete Campaign: {campaign.title}'
+        })
+    
+    def post(self, request, *args, **kwargs):
+        # Use try/except to handle the case where the campaign doesn't exist
+        try:
+            campaign = Campaign.objects.get(pk=kwargs['pk'], organisation=request.user.organisation)
+            
+            # Only allow deleting campaigns that are closed, rejected, or pending
+            if campaign.status not in ['closed', 'rejected', 'pending']:
+                messages.error(request, 'Only closed, rejected, or pending campaigns can be deleted.')
+                return redirect('org:campaign_detail', pk=campaign.pk)
+            
+            # Check if the campaign has donations
+            has_donations = campaign.donations.exists()
+            
+            if has_donations:
+                messages.error(request, 'Cannot delete this campaign because it has donations associated with it.')
+                return redirect('org:campaign_detail', pk=campaign.pk)
+            
+            # Store campaign title and status for success message before deletion
+            campaign_title = campaign.title
+            campaign_status = campaign.status
+            
+            # Delete the campaign
+            campaign.delete()
+            
+            # Show success message
+            messages.success(request, f'Your campaign "{campaign_title}" has been permanently deleted.')
+            
+            # Redirect to the campaigns page with the appropriate tab selected
+            from django.urls import reverse
+            return redirect(reverse('org:campaigns') + f'?status={campaign_status}')
+            
+        except Campaign.DoesNotExist:
+            # If campaign doesn't exist (might have been deleted already), just redirect to campaigns page
+            messages.info(request, 'This campaign may have been already deleted.')
+            return redirect('org:campaigns')
 
 
 class DonationsListView(OrganisationOwnerRequiredMixin, ListView):
@@ -365,7 +528,9 @@ class OrgCampaignDetailView(OrganisationOwnerRequiredMixin, DetailView):
             return ['funding/campaign_closed.html']
         elif campaign.status == 'active':
             return ['funding/campaign_active.html']
-        else:  # draft or pending
+        elif campaign.status == 'pending':
+            return ['funding/campaign_pending.html']
+        else:  # draft or any other status
             return ['funding/campaign_active.html']
     
     def get_context_data(self, **kwargs):

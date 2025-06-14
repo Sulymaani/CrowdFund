@@ -26,14 +26,12 @@ urlpatterns = [
     path("", HomeView.as_view(), name="home"),
     path('__django_admin__/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
-    path('accounts/', include('django.contrib.auth.urls')), # For password reset, etc.
+    path('accounts/', include('django.contrib.auth.urls')), # For password reset, etc.,
 
     # Donor Dashboard
     path('dashboard/donor/', DonorDashboardView.as_view(), name='donor_dashboard'),
     
     # Organization URLs - consolidated under /org/ prefix
-    path('org/dashboard/', OrgDashboardView.as_view(), name='org_dashboard'),
-    path('org/settings/', OrganisationSettingsView.as_view(), name='org_settings'),
     path('org/', include('funding.org_urls')),  # Organization-specific URLs from funding app
 
     # Admin URLs

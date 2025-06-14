@@ -1,0 +1,49 @@
+{% if request.admin_user.is_authenticated or request.org_user.is_authenticated or request.donor_user.is_authenticated %}
+<div class="bg-gray-100 py-2 px-4 text-sm border-b">
+    <div class="container mx-auto flex flex-wrap justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <span class="font-semibold text-gray-700">Active roles:</span>
+            
+            {% if request.admin_user.is_authenticated %}
+            <span class="px-2 py-1 bg-purple-200 text-purple-800 rounded-full text-xs flex items-center">
+                Admin
+                {% if request.current_role == 'admin' %}
+                <span class="ml-1 w-2 h-2 bg-purple-600 rounded-full"></span>
+                {% endif %}
+            </span>
+            {% endif %}
+            
+            {% if request.org_user.is_authenticated %}
+            <span class="px-2 py-1 bg-blue-200 text-blue-800 rounded-full text-xs flex items-center">
+                Organization
+                {% if request.current_role == 'org_owner' %}
+                <span class="ml-1 w-2 h-2 bg-blue-600 rounded-full"></span>
+                {% endif %}
+            </span>
+            {% endif %}
+            
+            {% if request.donor_user.is_authenticated %}
+            <span class="px-2 py-1 bg-green-200 text-green-800 rounded-full text-xs flex items-center">
+                Donor
+                {% if request.current_role == 'donor' %}
+                <span class="ml-1 w-2 h-2 bg-green-600 rounded-full"></span>
+                {% endif %}
+            </span>
+            {% endif %}
+        </div>
+        
+        <div class="flex space-x-2">
+            <a href="{% url 'multisession:status' %}" class="text-blue-600 hover:text-blue-800 text-xs">
+                Manage Sessions
+            </a>
+            <span class="text-gray-400">|</span>
+            <form method="post" action="{% url 'multisession:logout_all' %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="text-red-600 hover:text-red-800 text-xs bg-transparent border-none p-0 m-0 cursor-pointer">
+                    Logout All
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}

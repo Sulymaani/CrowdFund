@@ -24,10 +24,10 @@
                         <a href="{% url 'core_admin:dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">Admin Dashboard</a>
                         <a href="{% url 'core_admin:admin_campaign_queue' %}" class="px-3 py-2 rounded hover:bg-blue-700">Campaign Queue</a>
                     {% elif user.role == 'org_owner' %}
-                        <a href="{% url 'org_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Dashboard</a>
+                        <a href="{% url 'org:dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Dashboard</a>
                         <a href="{% url 'org:campaign_new' %}" class="px-3 py-2 rounded hover:bg-blue-700">Create Campaign</a>
                         <a href="{% url 'funding:campaign_list' %}" class="px-3 py-2 rounded hover:bg-blue-700">Campaigns</a>
-                        <a href="{% url 'org_settings' %}" class="px-3 py-2 rounded hover:bg-blue-700">Settings</a>
+                        <a href="{% url 'org:settings' %}" class="px-3 py-2 rounded hover:bg-blue-700">Settings</a>
                     {% elif user.role == 'donor' %}
                         <a href="{% url 'donor_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Dashboard</a>
                         <a href="{% url 'funding:campaign_list' %}" class="px-3 py-2 rounded hover:bg-blue-700">Browse Campaigns</a>

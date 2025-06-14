@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Session Status{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white shadow-md rounded-lg p-6 mt-8">
+    <h2 class="text-2xl font-bold mb-6 text-center text-blue-800">Multi-Session Status</h2>
+    
+    {% if active_roles %}
+    <div class="mb-6">
+        <h3 class="text-lg font-semibold text-blue-800 mb-2">Active Sessions</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% if 'admin' in active_roles %}
+            <div class="bg-purple-50 p-4 rounded border border-purple-200">
+                <h4 class="font-bold text-purple-800">Admin</h4>
+                <p class="text-sm mt-2">{{ admin_user.username }}</p>
+                <div class="mt-4 flex space-x-2">
+                    <a href="{% url 'multisession:switch_role' 'admin' %}" class="px-2 py-1 bg-purple-600 text-white text-xs rounded">
+                        Switch to
+                    </a>
+                    <form method="post" action="{% url 'multisession:logout' 'admin' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="px-2 py-1 bg-red-600 text-white text-xs rounded">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if 'org_owner' in active_roles %}
+            <div class="bg-blue-50 p-4 rounded border border-blue-200">
+                <h4 class="font-bold text-blue-800">Organization</h4>
+                <p class="text-sm mt-2">{{ org_user.username }}</p>
+                <div class="mt-4 flex space-x-2">
+                    <a href="{% url 'multisession:switch_role' 'org_owner' %}" class="px-2 py-1 bg-blue-600 text-white text-xs rounded">
+                        Switch to
+                    </a>
+                    <form method="post" action="{% url 'multisession:logout' 'org_owner' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="px-2 py-1 bg-red-600 text-white text-xs rounded">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if 'donor' in active_roles %}
+            <div class="bg-green-50 p-4 rounded border border-green-200">
+                <h4 class="font-bold text-green-800">Donor</h4>
+                <p class="text-sm mt-2">{{ donor_user.username }}</p>
+                <div class="mt-4 flex space-x-2">
+                    <a href="{% url 'multisession:switch_role' 'donor' %}" class="px-2 py-1 bg-green-600 text-white text-xs rounded">
+                        Switch to
+                    </a>
+                    <form method="post" action="{% url 'multisession:logout' 'donor' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="px-2 py-1 bg-red-600 text-white text-xs rounded">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="mt-4 border-t pt-4">
+        <form method="post" action="{% url 'multisession:logout_all' %}" class="inline">
+            {% csrf_token %}
+            <button type="submit" class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">
+                Logout All Sessions
+            </button>
+        </form>
+    </div>
+    {% else %}
+    <div class="bg-yellow-50 p-4 rounded border border-yellow-200">
+        <p class="text-center">You are not currently logged in with any role.</p>
+        <div class="mt-4 flex justify-center space-x-4">
+            <a href="{% url 'multisession:login' 'admin' %}" class="px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+                Login as Admin
+            </a>
+            <a href="{% url 'multisession:login' 'org_owner' %}" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                Login as Organization
+            </a>
+            <a href="{% url 'multisession:login' 'donor' %}" class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                Login as Donor
+            </a>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="mt-8 text-center">
+        <a href="{% url 'home' %}" class="text-blue-600 hover:text-blue-800">Back to Home</a>
+    </div>
+</div>
+{% endblock %}

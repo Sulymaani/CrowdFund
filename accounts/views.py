@@ -15,7 +15,7 @@ def get_user_dashboard_url(user):
         return reverse_lazy('core_admin:dashboard')
     elif hasattr(user, 'role'):
         if user.role == 'org_owner':
-            return reverse_lazy('org_dashboard')
+            return reverse_lazy('org:dashboard')
         elif user.role == 'donor':
             return reverse_lazy('donor_dashboard')
 

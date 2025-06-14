@@ -26,6 +26,27 @@
         }
     </style>
     {% block extra_css %}{% endblock %}
+    
+    <script>
+        // Function to auto-dismiss flash messages after a few seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            if (flashMessages.length > 0) {
+                flashMessages.forEach(function(message) {
+                    // Fade out the message after 5 seconds
+                    setTimeout(function() {
+                        message.style.transition = 'opacity 1s ease-in-out';
+                        message.style.opacity = '0';
+                        
+                        // Remove the message from the DOM after the fade out is complete
+                        setTimeout(function() {
+                            message.parentNode.removeChild(message);
+                        }, 1000);
+                    }, 5000);
+                });
+            }
+        });
+    </script>
 </head>
 <body>
     <!-- Organization Header -->
@@ -33,7 +54,7 @@
         <div class="container mx-auto px-4 flex justify-between items-center">
             <div class="flex items-center">
                 <div class="text-2xl font-bold">
-                    <a href="{% url 'org_dashboard' %}" class="text-white hover:text-blue-200">Crowdfund</a>
+                    <a href="{% url 'org:dashboard' %}" class="text-white hover:text-blue-200">Crowdfund</a>
                 </div>
                 <span class="ml-2 bg-blue-400 text-white text-xs px-2 py-1 rounded">Organization Portal</span>
             </div>
@@ -45,11 +66,11 @@
                         <a href="{% url 'core_admin:admin_campaign_queue' %}" class="px-3 py-2 rounded hover:bg-blue-700">Review Campaigns</a>
                         <a href="{% url 'core_admin:admin_organisations' %}" class="px-3 py-2 rounded hover:bg-blue-700">Organisations</a>
                     {% elif user.role == 'org_owner' %}
-                        <a href="{% url 'org_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Dashboard</a>
+                        <a href="{% url 'org:dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Dashboard</a>
                         <a href="{% url 'org:campaigns' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Campaigns</a>
                         <a href="{% url 'org:donations_list' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Donations</a>
                         <a href="{% url 'org:campaign_new' %}" class="px-3 py-2 rounded hover:bg-blue-700">Create Campaign</a>
-                        <a href="{% url 'org_settings' %}" class="px-3 py-2 rounded hover:bg-blue-700">Settings</a>
+                        <a href="{% url 'org:settings' %}?edit=true" class="px-3 py-2 rounded hover:bg-blue-700">Settings</a>
                     {% elif user.role == 'donor' %}
                         <a href="{% url 'donor_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Dashboard</a>
                         <a href="{% url 'funding:campaign_list' %}" class="px-3 py-2 rounded hover:bg-blue-700">Browse Campaigns</a>
@@ -83,7 +104,7 @@
     {% if messages %}
     <div class="container mx-auto px-4 mt-4">
         {% for message in messages %}
-        <div class="p-4 mb-4 rounded-md {% if message.tags == 'success' %}bg-green-50 text-green-800{% elif message.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-blue-50 text-blue-800{% endif %}">
+        <div class="flash-message p-4 mb-4 rounded-md {% if message.tags == 'success' %}bg-green-50 text-green-800{% elif message.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-blue-50 text-blue-800{% endif %}">
             {{ message }}
         </div>
         {% endfor %}
@@ -106,9 +127,9 @@
                 <div>
                     <h4 class="text-sm font-bold mb-2">Quick Links</h4>
                     <ul class="text-sm">
-                        <li><a href="{% url 'org_dashboard' %}" class="text-blue-200 hover:text-white">Dashboard</a></li>
+                        <li><a href="{% url 'org:dashboard' %}" class="text-blue-200 hover:text-white">Dashboard</a></li>
                         <li><a href="{% url 'org:campaign_new' %}" class="text-blue-200 hover:text-white">Create Campaign</a></li>
-                        <li><a href="{% url 'org_settings' %}" class="text-blue-200 hover:text-white">Organization Settings</a></li>
+                        <li><a href="{% url 'org:settings' %}?edit=true" class="text-blue-200 hover:text-white">Organization Settings</a></li>
                     </ul>
                 </div>
             </div>

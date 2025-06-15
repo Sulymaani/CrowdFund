@@ -139,6 +139,31 @@
                 {% endfor %}
             </div>
         </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-sm mb-8 border border-gray-100 hover:shadow-md transition-all duration-300">
+            <div class="flex items-center mb-4">
+                <svg class="w-6 h-6 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
+                </svg>
+                <label class="block text-md font-medium text-gray-700">Campaign Tags</label>
+            </div>
+            <div class="mt-1">
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {% for tag in form.fields.tags.queryset %}
+                        <div class="flex items-center">
+                            <input type="checkbox" name="tags" id="id_tags_{{ forloop.counter0 }}" value="{{ tag.pk }}" 
+                            {% if tag in form.instance.tags.all or tag.pk|stringformat:"s" in form.data.getlist.tags %} checked="checked"{% endif %}
+                            class="h-4 w-4 text-blue-600 border-gray-300 rounded">
+                            <label for="id_tags_{{ forloop.counter0 }}" class="ml-2 text-sm text-gray-700">{{ tag.name }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+                <p class="mt-2 text-sm text-gray-500">Select one or more tags that describe your campaign</p>
+                {% for error in form.tags.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                {% endfor %}
+            </div>
+        </div>
 
         <div class="flex justify-end space-x-4 mt-8">
             <a href="{% url 'org:campaigns' %}" class="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none transition duration-200">

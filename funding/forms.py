@@ -52,9 +52,18 @@ class OrganisationSettingsForm(forms.ModelForm):
         }
 
 class CampaignForm(forms.ModelForm):
+    tags = forms.ModelMultipleChoiceField(
+        queryset=None,  # Will be set in __init__
+        required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={
+            'class': 'form-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-2'
+        }),
+        help_text='Select one or more tags that describe your campaign'
+    )
+    
     class Meta:
         model = Campaign
-        fields = ['title', 'description', 'cover_image', 'goal']
+        fields = ['title', 'description', 'cover_image', 'goal', 'tags']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'block w-full px-4 py-2 mt-2 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
@@ -80,12 +89,18 @@ class CampaignForm(forms.ModelForm):
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Set the queryset for tags
+        from .models import Tag
+        self.fields['tags'].queryset = Tag.objects.all().order_by('name')
+        
         # Make sure the fields are properly initialized with instance data
         if self.instance and self.instance.pk:
             if not self.is_bound:  # Only set initial if the form is not bound to POST data
                 self.fields['title'].initial = self.instance.title
                 self.fields['description'].initial = self.instance.description
                 self.fields['goal'].initial = self.instance.goal
+                # Set initial tags if they exist
+                self.fields['tags'].initial = self.instance.tags.all()
 
 
 class CampaignAdminReviewForm(forms.ModelForm):

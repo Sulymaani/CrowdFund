@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.utils.text import slugify
 from core.validators import FileSizeValidator, ImageDimensionsValidator, ImageFormatValidator
 
 def org_logo_path(instance, filename):
@@ -44,6 +45,21 @@ class Organisation(models.Model):
     def __str__(self):
         return self.name
 
+class Tag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    slug = models.SlugField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return self.name
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
+
 class Campaign(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -69,6 +85,7 @@ class Campaign(models.Model):
     )
     goal = models.PositiveIntegerField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    tags = models.ManyToManyField(Tag, blank=True, related_name='campaigns', help_text="Categories or tags for this campaign")
     admin_remarks = models.TextField(null=True, blank=True, help_text="Internal remarks from an admin regarding the campaign's status.")
     created_at = models.DateTimeField(auto_now_add=True)
 

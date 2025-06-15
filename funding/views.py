@@ -22,7 +22,28 @@ class CampaignListView(ListView):
     context_object_name = 'campaigns'
 
     def get_queryset(self):
-        return Campaign.objects.filter(status='active').order_by('-created_at')
+        queryset = Campaign.objects.filter(status='active')
+        
+        # Get tag filter parameters
+        tag_slugs = self.request.GET.getlist('tags')
+        if tag_slugs:
+            # Filter by selected tags - campaigns must have ALL selected tags
+            for tag_slug in tag_slugs:
+                queryset = queryset.filter(tags__slug=tag_slug)
+        
+        return queryset.order_by('-created_at').distinct()
+        
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get all tags for the filter UI
+        from .models import Tag
+        context['all_tags'] = Tag.objects.all().order_by('name')
+        
+        # Get selected tags for the template
+        context['selected_tags'] = self.request.GET.getlist('tags')
+        
+        return context
 
 
 class CampaignDetailView(DetailView):

@@ -53,6 +53,20 @@
                 <div class="prose max-w-none">{{ campaign.description|linebreaks }}</div>
             </div>
         {% endif %}
+        
+        <!-- Campaign Tags -->
+        {% if campaign.tags.all %}
+        <div class="mb-4">
+            <p class="text-gray-500 text-sm mb-1">Tags</p>
+            <div class="flex flex-wrap gap-1 mt-1">
+                {% for tag in campaign.tags.all %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                        <span class="mr-1">#</span>{{ tag.name }}
+                    </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Information Box -->

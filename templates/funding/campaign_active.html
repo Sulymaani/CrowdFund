@@ -52,7 +52,7 @@
         
         <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
             {% widthratio total_raised campaign.goal 100 as percent %}
-            <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ percent|default:0 }}%"></div>
+            <div class="bg-blue-600 h-2.5 rounded-full" {% if percent %}style="width: {{ percent }}%;"{% else %}style="width: 0%;"{% endif %}></div>
         </div>
         
         <div class="flex justify-between text-sm">
@@ -73,6 +73,21 @@
     <!-- Campaign Details -->
     <div class="bg-gray-50 p-5 rounded-lg border border-gray-200 mb-6">
         <h3 class="text-lg font-bold mb-3">Campaign Details</h3>
+        
+        <!-- Campaign Tags -->
+        {% if campaign.tags.all %}
+        <div class="mb-4">
+            <h4 class="text-sm font-medium text-gray-700 mb-2">Tags:</h4>
+            <div class="flex flex-wrap gap-1">
+                {% for tag in campaign.tags.all %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                        <span class="mr-1">#</span>{{ tag.name }}
+                    </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
         <div class="prose max-w-none">
             {{ campaign.description|linebreaks }}
         </div>

@@ -1,0 +1,264 @@
+{% extends 'base_org.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - CrowdFund{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav class="bg-gray-50 p-3 mb-5 rounded-lg shadow-sm" aria-label="Breadcrumb">
+        <ol class="flex flex-wrap text-sm">
+            <li class="flex items-center">
+                <a href="{% url 'org:dashboard' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                    Dashboard
+                </a>
+                <span class="text-gray-400 mx-2">/</span>
+            </li>
+            <li>
+                <span class="text-gray-700 font-medium">Organisation Settings</span>
+            </li>
+        </ol>
+    </nav>
+
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Organisation Profile</h1>
+        <div class="flex space-x-3">
+            {% if not edit_mode %}
+            <a href="{% url 'org:settings' %}?edit=true" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md">
+                Edit Profile
+            </a>
+            {% endif %}
+            <a href="{% url 'org:dashboard' %}" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-md">
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white shadow-md rounded-lg p-6">
+        {% if edit_mode %}
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="mb-4 bg-red-50 border-l-4 border-red-400 p-4">
+                    <div class="text-sm text-red-700">
+                        {{ form.non_field_errors }}
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Organisation Branding -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 pb-2 border-b border-gray-200">Brand Identity</h2>
+                
+                <!-- Banner Image -->
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Organisation Banner</label>
+                    <div class="flex flex-col space-y-3">
+                        <div class="w-full h-32 bg-gray-200 rounded-md flex items-center justify-center overflow-hidden">
+                            {% if organisation.banner %}
+                                <img src="{{ organisation.banner.url }}" alt="{{ organisation.name }} banner" class="object-cover w-full h-full">
+                            {% else %}
+                                <div class="flex flex-col items-center justify-center h-full w-full">
+                                    <svg class="h-10 w-10 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <p class="text-gray-500 text-sm mt-1">No banner image set</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="banner-upload" class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm">
+                                Choose Banner
+                                {{ form.banner }}
+                            </label>
+                            <p class="text-xs text-gray-500 mt-1">{{ form.banner.help_text }}</p>
+                            {% if form.banner.errors %}
+                                <p class="text-red-500 text-xs mt-1">{{ form.banner.errors }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Organisation Logo -->
+                <div class="mb-6">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Organisation Logo</label>
+                    <div class="flex items-center">
+                        <div class="w-24 h-24 bg-gray-200 rounded-md flex items-center justify-center overflow-hidden mr-4">
+                            {% if organisation.logo %}
+                                <img src="{{ organisation.logo.url }}" alt="{{ organisation.name }} logo" class="object-cover w-full h-full">
+                            {% else %}
+                                <svg class="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                </svg>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="logo-upload" class="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md text-sm">
+                                Choose Logo
+                                {{ form.logo }}
+                            </label>
+                            <p class="text-xs text-gray-500 mt-1">{{ form.logo.help_text }}</p>
+                            {% if form.logo.errors %}
+                                <p class="text-red-500 text-xs mt-1">{{ form.logo.errors }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organisation Name -->
+            <div class="mb-6">
+                <label for="{{ form.name.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">
+                    Organisation Name
+                </label>
+                <input type="text" 
+                       name="{{ form.name.name }}" 
+                       id="{{ form.name.id_for_label }}" 
+                       value="{{ form.name.value|default:'' }}" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <p class="text-xs text-gray-500 mt-1">{{ form.name.help_text }}</p>
+                {% if form.name.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.name.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Organisation Mission -->
+            <div class="mb-6">
+                <label for="{{ form.mission.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">
+                    Mission & Description
+                </label>
+                <textarea name="{{ form.mission.name }}" 
+                          id="{{ form.mission.id_for_label }}" 
+                          rows="4" 
+                          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">{{ form.mission.value|default:'' }}</textarea>
+                <p class="text-xs text-gray-500 mt-1">{{ form.mission.help_text }}</p>
+                {% if form.mission.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.mission.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Organisation Website -->
+            <div class="mb-6">
+                <label for="{{ form.website.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">
+                    Website
+                </label>
+                <input type="url" 
+                       name="{{ form.website.name }}" 
+                       id="{{ form.website.id_for_label }}" 
+                       value="{{ form.website.value|default:'' }}" 
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <p class="text-xs text-gray-500 mt-1">{{ form.website.help_text }}</p>
+                {% if form.website.errors %}
+                    <p class="text-red-500 text-xs mt-1">{{ form.website.errors }}</p>
+                {% endif %}
+            </div>
+
+            <div class="flex justify-end">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-md">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+        {% endif %}
+        
+        {% if not edit_mode %}
+        <!-- View Mode -->
+        <div class="space-y-8">
+            <!-- Organisation Branding -->
+            <div>
+                <h2 class="text-xl font-semibold mb-6 text-gray-800 pb-2 border-b border-gray-200">Organisation Branding</h2>
+                
+                <!-- Banner -->
+                <div class="mb-8">
+                    {% if organisation.banner %}
+                        <div class="w-full h-48 bg-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <img src="{{ organisation.banner.url }}" alt="{{ organisation.name }} banner" class="w-full h-full object-cover">
+                        </div>
+                    {% else %}
+                        <div class="w-full h-48 bg-gray-100 rounded-lg mb-4 flex flex-col items-center justify-center text-gray-400 shadow-inner">
+                            <svg class="h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <p class="mt-2">No banner image set</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Logo -->
+                <div class="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0">
+                    <div class="flex flex-col items-center">
+                        <div class="w-40 h-40 bg-gray-100 rounded-lg overflow-hidden shadow-md mb-2 flex items-center justify-center">
+                            {% if organisation.logo %}
+                                <img src="{{ organisation.logo.url }}" alt="{{ organisation.name }} logo" class="object-contain w-full h-full">
+                            {% else %}
+                                <svg class="h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                </svg>
+                            {% endif %}
+                        </div>
+                        <div class="text-sm text-gray-500">Organisation Logo</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Organisation Details -->
+            <div>
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 pb-2 border-b border-gray-200">Organisation Details</h2>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-base font-medium text-gray-700">Organisation Name</h3>
+                        <p class="text-lg">{{ organisation.name }}</p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-base font-medium text-gray-700">Mission & Description</h3>
+                        <div class="bg-gray-50 p-4 rounded-md border border-gray-100">
+                            {% if organisation.mission %}
+                                <p>{{ organisation.mission|linebreaksbr }}</p>
+                            {% else %}
+                                <p class="text-gray-500 italic">No mission statement provided</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-base font-medium text-gray-700">Website</h3>
+                        {% if organisation.website %}
+                            <p><a href="{{ organisation.website }}" target="_blank" class="text-blue-600 hover:underline">{{ organisation.website }}</a></p>
+                        {% else %}
+                            <p class="text-gray-500 italic">No website provided</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Function to handle file selection for uploads
+    function handleFileUpload(fileInputId) {
+        const element = document.getElementById(fileInputId);
+        if (!element) return;
+        
+        element.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const fileName = this.files[0].name;
+                const fileSize = Math.round(this.files[0].size / 1024) + 'KB';
+                const parentElement = this.parentElement;
+                
+                // Update the button text with the file name
+                parentElement.innerHTML = `Selected: ${fileName} (${fileSize}) <span class="ml-2">✓</span>`;
+                parentElement.classList.add('bg-green-600');
+            }
+        });
+    }
+    
+    // Initialize file upload handlers when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        handleFileUpload('logo-upload');
+        handleFileUpload('banner-upload');
+    });
+</script>
+{% endblock %}

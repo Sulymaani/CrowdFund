@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CrowdFund Organization Portal{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f9ff; /* Light blue background */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .org-header {
+            background-color: #0c4a6e; /* Dark blue header */
+            color: white;
+        }
+        .org-footer {
+            background-color: #0c4a6e; /* Dark blue footer */
+            color: white;
+            margin-top: auto;
+        }
+        .content {
+            flex: 1;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+    
+    <script>
+        // Function to auto-dismiss flash messages after a few seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            if (flashMessages.length > 0) {
+                flashMessages.forEach(function(message) {
+                    // Fade out the message after 5 seconds
+                    setTimeout(function() {
+                        message.style.transition = 'opacity 1s ease-in-out';
+                        message.style.opacity = '0';
+                        
+                        // Remove the message from the DOM after the fade out is complete
+                        setTimeout(function() {
+                            message.parentNode.removeChild(message);
+                        }, 1000);
+                    }, 5000);
+                });
+            }
+        });
+    </script>
+</head>
+<body>
+    <!-- Organization Header -->
+    <nav class="org-header p-4 text-white">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="{% url 'org:dashboard' %}" class="text-lg font-semibold">CrowdFund Organization Portal</a>
+            <div class="flex items-center space-x-4">
+                {% if user.is_authenticated %}
+                    {% if user.role == 'admin' %}
+                        <a href="{% url 'core_admin:admin_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">Dashboard</a>
+                        <a href="{% url 'core_admin:admin_campaign_queue' %}" class="px-3 py-2 rounded hover:bg-blue-700">Campaign Queue</a>
+                    {% elif user.role == 'org_owner' %}
+                        <a href="{% url 'org:dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">Dashboard</a>
+                        <a href="{% url 'org:campaigns' %}" class="px-3 py-2 rounded hover:bg-blue-700">Campaigns</a>
+                        <a href="{% url 'org:donations_list' %}" class="px-3 py-2 rounded hover:bg-blue-700">Donations</a>
+                        <a href="{% url 'org:campaign_new' %}" class="px-3 py-2 rounded hover:bg-blue-700">Create Campaign</a>
+                        <a href="{% url 'org:settings' %}" class="px-3 py-2 rounded hover:bg-blue-700">Settings</a>
+                    {% elif user.role == 'donor' %}
+                        <a href="{% url 'donor_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">Dashboard</a>
+                        <a href="{% url 'funding:campaign_list' %}" class="px-3 py-2 rounded hover:bg-blue-700">Browse Campaigns</a>
+                    {% endif %}
+                    
+                    {% if user.is_impersonated %}
+                        <span class="ml-2 bg-red-600 text-white text-xs px-2 py-1 rounded">IMPERSONATING</span>
+                        <form method="post" action="{% url 'core_admin:stop_impersonating' %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="text-white text-sm px-3 py-1 bg-red-700 rounded hover:bg-red-800">
+                                Stop Impersonating
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="post" action="{% url 'accounts:logout' %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="px-3 py-2 rounded hover:bg-blue-700 bg-transparent border-none text-white cursor-pointer">Logout</button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'accounts:login' %}" class="px-3 py-2 rounded hover:bg-blue-700">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% if messages %}
+    <div class="container mx-auto px-4 mt-4">
+        {% for message in messages %}
+        <div class="flash-message p-4 mb-4 rounded-md {% if message.tags == 'success' %}bg-green-50 text-green-800{% elif message.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-blue-50 text-blue-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="content container mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="org-footer text-white text-center p-4 mt-8">
+        <p>&copy; {% now "Y" %} CrowdFund Platform. Organization Portal.</p>
+    </footer>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

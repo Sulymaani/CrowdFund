@@ -233,13 +233,6 @@ class OrgCampaignsListView(OrganisationOwnerRequiredMixin, ListView):
     template_name = 'funding/org_campaigns.html'
     context_object_name = 'campaigns'
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Debug campaign statuses in list
-        for campaign in context['campaigns']:
-            print(f"LIST DEBUG: Campaign {campaign.id} - {campaign.title} has status '{campaign.status}'")
-        return context
-    
     def get_queryset(self):
         # Filter campaigns by the org owner's organization
         org = self.request.user.organisation
@@ -251,17 +244,34 @@ class OrgCampaignsListView(OrganisationOwnerRequiredMixin, ListView):
         # Apply status filter if provided
         if status_filter and status_filter in ['draft', 'pending', 'active', 'rejected', 'closed']:
             queryset = queryset.filter(status=status_filter)
+        
+        # Get tag filter parameters
+        tag_ids = self.request.GET.getlist('tags')
+        if tag_ids:
+            # Filter by selected tags
+            for tag_id in tag_ids:
+                queryset = queryset.filter(tags__id=tag_id)
             
         # Annotate with total raised
         return queryset.annotate(
             total_raised=Coalesce(Sum('donations__amount'), Value(0))
-        ).order_by('-created_at')
+        ).order_by('-created_at').distinct()
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'My Campaigns'
+        
         # Add status for tab highlighting
         context['current_status'] = self.request.GET.get('status', 'all')
+        
+        # Get all tags for the filter UI
+        from .models import Tag
+        context['all_tags'] = Tag.objects.all().order_by('name')
+        
+        # Get selected tags for the template (convert to strings for comparison)
+        context['selected_tags'] = [str(tag_id) for tag_id in self.request.GET.getlist('tags')]
+        print(f"DEBUG: Selected tags: {context['selected_tags']}")
+        
         return context
 
 

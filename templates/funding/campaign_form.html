@@ -182,19 +182,30 @@
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('campaign-form');
         const submitButton = document.getElementById('submit-button');
-        let isSubmitting = false;
+        let formSubmitted = false;
         
         form.addEventListener('submit', function(e) {
-            if (isSubmitting) {
+            if (formSubmitted) {
+                console.log('Preventing duplicate submission');
                 e.preventDefault();
                 return false;
             }
             
-            isSubmitting = true;
+            // Set a flag in sessionStorage to track submission across page loads
+            sessionStorage.setItem('formSubmitting', 'true');
+            formSubmitted = true;
+            
+            // Disable the button
             submitButton.disabled = true;
             submitButton.innerHTML = 'Submitting...';
             submitButton.classList.add('opacity-50', 'cursor-not-allowed');
         });
+        
+        // Check if we're coming back after a form submission
+        if (sessionStorage.getItem('formSubmitting')) {
+            // Clear the flag
+            sessionStorage.removeItem('formSubmitting');
+        }
     });
 </script>
 {% endblock %}

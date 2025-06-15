@@ -2,11 +2,43 @@
 let donationTrendsChart; // Global reference for updating chart periods
 let weeklyData, monthlyData, yearlyData; // Data for different periods
 
+// Helper function to safely parse JSON data
+function safeJsonParse(jsonString, defaultValue) {
+    if (!jsonString || jsonString === '{}' || jsonString === '') {
+        console.log('Empty JSON string provided, using default value');
+        return defaultValue;
+    }
+    
+    try {
+        // Attempt to parse the string directly
+        return JSON.parse(jsonString);
+    } catch (e) {
+        // If direct parsing fails, check if it's an HTML-escaped JSON string
+        try {
+            // Replace HTML entities and try parsing again
+            const unescaped = jsonString
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'")
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&amp;/g, '&');
+            return JSON.parse(unescaped);
+        } catch (e2) {
+            console.error('Error parsing JSON data:', e2);
+            return defaultValue;
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Monthly Donations Chart
     const donationsCtx = document.getElementById('monthlyDonationsChart');
     if (donationsCtx) {
-        const donationData = JSON.parse(donationsCtx.dataset.donations || '{}');
+        console.log('Monthly donations chart data:', donationsCtx.dataset.donations);
+        const donationData = safeJsonParse(donationsCtx.dataset.donations, {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            values: [1200, 1900, 3000, 2400, 1800, 3200]
+        });
         new Chart(donationsCtx, {
             type: 'bar',
             data: {
@@ -51,9 +83,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Campaign Performance Chart
     const campaignPerformanceCtx = document.getElementById('campaignPerformanceChart');
     if (campaignPerformanceCtx) {
-        const campaignData = JSON.parse(campaignPerformanceCtx.dataset.campaigns);
+        console.log('Campaign performance chart data:', campaignPerformanceCtx.dataset.campaigns);
+        const campaignData = safeJsonParse(campaignPerformanceCtx.dataset.campaigns, {
+            labels: ['Campaign 1', 'Campaign 2', 'Campaign 3', 'Campaign 4', 'Campaign 5'],
+            raised: [12000, 8500, 15000, 9000, 4500],
+            goals: [20000, 10000, 25000, 15000, 5000]
+        });
         new Chart(campaignPerformanceCtx, {
-            type: 'horizontalBar',
+            type: 'bar',
             data: {
                 labels: campaignData.labels,
                 datasets: [{
@@ -104,30 +141,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const donationSourcesCtx = document.getElementById('donationSourcesChart');
     if (donationSourcesCtx) {
         console.log('Found donation sources chart element, data-sources:', donationSourcesCtx.dataset.sources);
-        let sourcesData;
         let labels = [];
         let values = [];
         
-        try {
-            const parsedData = JSON.parse(donationSourcesCtx.dataset.sources || '{}');
-            console.log('Parsed source data format:', parsedData);
-            
-            if (Array.isArray(parsedData)) {
-                // If array format with source/amount objects
-                sourcesData = parsedData;
-                labels = sourcesData.map(item => item.source);
-                values = sourcesData.map(item => item.amount);
-            } else {
-                // If labels/values format
-                sourcesData = parsedData;
-                labels = parsedData.labels || ['Direct', 'Social Media', 'Email', 'Referral', 'Other'];
-                values = parsedData.values || [40, 25, 20, 10, 5];
-            }
-        } catch (e) {
-            console.error('Error parsing donation sources data:', e);
-            // Default data
-            labels = ['Direct', 'Social Media', 'Website', 'Other'];
-            values = [2450, 1280, 1865, 587];
+        const defaultSourcesData = {
+            labels: ['Direct', 'Social Media', 'Website', 'Other'],
+            values: [2450, 1280, 1865, 587]
+        };
+        
+        const parsedData = safeJsonParse(donationSourcesCtx.dataset.sources, defaultSourcesData);
+        console.log('Parsed source data:', parsedData);
+        
+        if (Array.isArray(parsedData)) {
+            // If array format with source/amount objects
+            labels = parsedData.map(item => item.source);
+            values = parsedData.map(item => item.amount);
+        } else {
+            // If labels/values format
+            labels = parsedData.labels || defaultSourcesData.labels;
+            values = parsedData.values || defaultSourcesData.values;
         }
 
         new Chart(donationSourcesCtx, {
@@ -183,20 +215,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const donationTrendsCtx = document.getElementById('donationChart');
     if (donationTrendsCtx) {
         console.log('Found donation chart element, data-trends:', donationTrendsCtx.dataset.trends);
-        let trendsData;
-        try {
-            // If empty, use defaults
-            if (!donationTrendsCtx.dataset.trends || donationTrendsCtx.dataset.trends === '{}' || donationTrendsCtx.dataset.trends === '') {
-                console.log('No trends data found, using defaults');
-                trendsData = {};
-            } else {
-                trendsData = JSON.parse(donationTrendsCtx.dataset.trends);
-                console.log('Parsed trends data:', trendsData);
+        
+        // Default trends data as fallback
+        const defaultTrendsData = {
+            weekly: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                values: [125, 232, 187, 290, 346, 402, 501]
+            },
+            monthly: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                values: [1250, 1432, 1687, 1890]
+            },
+            yearly: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                values: [5250, 4890, 6540, 5780, 6432, 7230, 6890, 7654, 8320, 7890, 8765, 9230]
             }
-        } catch (e) {
-            console.error('Error parsing donation trends data:', e);
-            trendsData = {};
-        }
+        };
+        
+        // Parse trends data using our safe JSON parser
+        const trendsData = safeJsonParse(donationTrendsCtx.dataset.trends, defaultTrendsData);
+        console.log('Parsed trends data:', trendsData);
         
         // Initialize data for different periods (or use sample data if not available)
         weeklyData = trendsData.weekly || {

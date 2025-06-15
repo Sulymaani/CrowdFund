@@ -54,11 +54,11 @@ class OrganisationSettingsForm(forms.ModelForm):
 class CampaignForm(forms.ModelForm):
     tags = forms.ModelMultipleChoiceField(
         queryset=None,  # Will be set in __init__
-        required=False,
+        required=True,
         widget=forms.CheckboxSelectMultiple(attrs={
             'class': 'form-checkbox h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mr-2'
         }),
-        help_text='Select one or more tags that describe your campaign'
+        help_text='Select at least one tag that describes your campaign'
     )
     
     class Meta:
@@ -111,7 +111,7 @@ class CampaignAdminReviewForm(forms.ModelForm):
     )
     admin_remarks = forms.CharField(
         widget=forms.Textarea(attrs={'rows': 4, 'class': 'mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'}),
-        required=False,
+        required=True,
         label="Admin Remarks"
     )
 

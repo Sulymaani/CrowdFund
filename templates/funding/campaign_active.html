@@ -51,14 +51,8 @@
         <h2 class="text-xl font-bold text-gray-800 mb-3">${{ total_raised|intcomma }} raised of ${{ campaign.goal|intcomma }} goal</h2>
         
         <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
-            {% if campaign.goal > 0 %}
-                {% widthratio total_raised campaign.goal 100 as percent %}
-                {% with progress=percent|default:0 %}
-                    <div class="bg-blue-600 h-2.5 rounded-full" {% if progress > 0 %}style="width: {{ progress }}%"{% else %}style="width: 0"{% endif %}></div>
-                {% endwith %}
-            {% else %}
-                <div class="bg-blue-600 h-2.5 rounded-full w-0"></div>
-            {% endif %}
+            {% widthratio total_raised campaign.goal 100 as percent %}
+            <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ percent|default:0 }}%"></div>
         </div>
         
         <div class="flex justify-between text-sm">

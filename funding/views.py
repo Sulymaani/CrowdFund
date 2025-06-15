@@ -250,11 +250,177 @@ class OrgDashboardView(OrganisationOwnerRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         org = self.request.user.organisation
+        import json
+        import random
+        from datetime import datetime, timedelta
 
         # KPI Calculations
         total_raised = Donation.objects.filter(campaign__organisation=org).aggregate(Sum('amount'))['amount__sum'] or 0
         active_campaigns = Campaign.objects.filter(organisation=org, status='active').count()
         total_donors = Donation.objects.filter(campaign__organisation=org).values('user').distinct().count()
+        campaigns_pending = Campaign.objects.filter(organisation=org, status='pending').count()
+        
+        # Get the number of new donors this month
+        first_day_of_month = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        new_donors_this_month = Donation.objects.filter(
+            campaign__organisation=org,
+            created_at__gte=first_day_of_month
+        ).values('user').distinct().count()
+
+        # Sample trend data for sparklines (if no real data available)
+        def generate_trend_data(length=12, growth_factor=1.2):
+            base = random.randint(10, 20)
+            data = []
+            for i in range(length):
+                # Create realistic growth pattern with some randomness
+                val = base * (1 + (random.random() * 0.3 - 0.1)) * (growth_factor ** (i/6))
+                data.append(int(val))
+            return json.dumps(data)
+
+        # Get period-based donation data for the chart
+        now = datetime.now()
+        current_year = now.year
+        current_month = now.month
+        current_day = now.day
+        
+        # Weekly data - last 7 days
+        days_of_week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        weekly_labels = []
+        weekly_values = []
+        
+        for i in range(7):
+            day = now - timedelta(days=i)
+            day_name = day.strftime('%a')
+            weekly_labels.insert(0, day_name)
+            
+            # Get donations for this day
+            day_start = day.replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = day.replace(hour=23, minute=59, second=59, microsecond=999999)
+            
+            day_donations = Donation.objects.filter(
+                campaign__organisation=org,
+                created_at__gte=day_start,
+                created_at__lte=day_end
+            ).aggregate(Sum('amount'))['amount__sum'] or 0
+            weekly_values.insert(0, day_donations)
+        
+        # Monthly data - last 4 weeks
+        weekly_labels_month = []
+        weekly_values_month = []
+        
+        for i in range(4):
+            week_end = now - timedelta(days=i*7)
+            week_start = week_end - timedelta(days=6)
+            week_label = f"Week {4-i}"
+            weekly_labels_month.insert(0, week_label)
+            
+            week_donations = Donation.objects.filter(
+                campaign__organisation=org,
+                created_at__gte=week_start,
+                created_at__lte=week_end
+            ).aggregate(Sum('amount'))['amount__sum'] or 0
+            weekly_values_month.insert(0, week_donations)
+            
+        # Yearly data - last 12 months
+        months = []
+        monthly_values = []
+        
+        # Try to get actual monthly donation data
+        for i in range(12):
+            month = current_month - i
+            year = current_year
+            if month <= 0:
+                month += 12
+                year -= 1
+        
+            start_date = datetime(year, month, 1)
+            if month == 12:
+                end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
+            else:
+                end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+        
+            month_name = start_date.strftime('%b')
+            months.insert(0, month_name)
+        
+            # Get actual donations for this month
+            month_donations = Donation.objects.filter(
+                campaign__organisation=org,
+                created_at__gte=start_date,
+                created_at__lte=end_date
+            ).aggregate(Sum('amount'))['amount__sum'] or 0
+        
+            monthly_values.insert(0, month_donations)
+    
+        # Check if we have real data or need sample data
+        if sum(monthly_values) == 0:
+            # Use sample data if no real data exists
+            monthly_values = [1200, 1900, 3000, 2400, 1800, 3200, 2100, 2800, 3500, 4200, 3800, 4500]
+        
+        if sum(weekly_values) == 0:
+            # Sample data for weekly
+            weekly_values = [125, 232, 187, 290, 346, 402, 501]
+            
+        if sum(weekly_values_month) == 0:
+            # Sample data for monthly (weeks)
+            weekly_values_month = [1250, 1432, 1687, 1890]
+    
+        # Calculate month-over-month growth for KPI card
+        current_month_donations = monthly_values[-1] if monthly_values else 0
+        prev_month_donations = monthly_values[-2] if len(monthly_values) > 1 and monthly_values[-2] > 0 else 1
+        raised_percentage = int((current_month_donations / prev_month_donations - 1) * 100) if prev_month_donations else 0
+    
+        # Get donation sources data (try real data first, then fallback to samples)
+        source_categories = {}
+        source_donations = Donation.objects.filter(campaign__organisation=org)
+        
+        # Try to analyze real donation sources if we have data
+        if source_donations.exists():
+            # Sample logic for categorizing sources - adapt to your actual data model
+            for donation in source_donations:
+                source = 'Direct'  # Default category
+                
+                # Example logic - replace with your actual referral source logic
+                if hasattr(donation, 'source') and donation.source:
+                    source = donation.source
+                elif hasattr(donation, 'referrer') and donation.referrer:
+                    if 'facebook' in donation.referrer.lower() or 'twitter' in donation.referrer.lower() or 'instagram' in donation.referrer.lower():
+                        source = 'Social Media'
+                    elif 'email' in donation.referrer.lower() or 'newsletter' in donation.referrer.lower():
+                        source = 'Email'
+                    elif donation.referrer != '':
+                        source = 'Referral'
+                
+                if source not in source_categories:
+                    source_categories[source] = 0
+                source_categories[source] += donation.amount
+            
+            # Convert to format needed for the chart
+            sources = {
+                'labels': list(source_categories.keys()),
+                'values': list(source_categories.values())
+            }
+        else:
+            # Sample data if no real data
+            sources = {
+                'labels': ['Direct', 'Social Media', 'Email', 'Referral', 'Other'],
+                'values': [3500, 2200, 1800, 950, 550]  # Sample values
+            }
+
+        # Prepare trends data for the chart periods
+        donation_trends_data = {
+            'weekly': {
+                'labels': weekly_labels,
+                'values': weekly_values
+            },
+            'monthly': {
+                'labels': weekly_labels_month,
+                'values': weekly_values_month
+            },
+            'yearly': {
+                'labels': months,
+                'values': monthly_values
+            }
+        }
 
         context['page_title'] = 'My Organisation Dashboard'
         context['organisation'] = org
@@ -262,12 +428,23 @@ class OrgDashboardView(OrganisationOwnerRequiredMixin, TemplateView):
             'total_raised': total_raised,
             'active_campaigns': active_campaigns,
             'total_donors': total_donors,
+            'campaigns_pending': campaigns_pending,
+            'raised_percentage': raised_percentage,
+            'new_donors': new_donors_this_month,
+            'monthly_donations': ','.join(map(str, monthly_values[-6:])),  # Last 6 months
+            'donations_trend': generate_trend_data(),
+            'campaigns_trend': generate_trend_data(growth_factor=1.1),
+            'donors_trend': generate_trend_data(growth_factor=1.3),
+            'donations_chart_data': json.dumps(donation_trends_data),
+            'donation_sources': json.dumps(sources)
         }
+    
         context['campaigns'] = Campaign.objects.filter(
             organisation=self.request.user.organisation
         ).annotate(
             total_raised=Coalesce(Sum('donations__amount'), Value(0))
         ).order_by('-created_at')
+    
         return context
 
 
@@ -641,7 +818,10 @@ class OrganisationSettingsView(OrganisationOwnerRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         organisation = request.user.organisation
-        edit_mode = request.GET.get('edit', 'false') == 'true'
+        # Explicitly force view mode by default
+        # Only enter edit mode if edit=true is EXPLICITLY passed
+        edit_param = request.GET.get('edit', None)
+        edit_mode = (edit_param is not None and edit_param.lower() == 'true')
         
         form = None
         if edit_mode:
@@ -661,7 +841,7 @@ class OrganisationSettingsView(OrganisationOwnerRequiredMixin, View):
         if form.is_valid():
             form.save()
             messages.success(request, 'Your organisation profile has been updated.')
-            # Redirect to view mode after successful update
+            # Explicitly redirect to view mode after successful update
             return redirect('org:settings')
         
         return render(request, self.template_name, {

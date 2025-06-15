@@ -66,20 +66,30 @@
     <div class="mb-8">
         <div class="flex justify-between items-center mb-2">
             <h3 class="text-xl font-semibold text-gray-800">${{ total_donations|default:"0" }} raised of ${{ campaign.goal }} goal</h3>
-            {% widthratio total_donations|default:0 campaign.goal 100 as progress_percent %}
-            <span class="text-sm text-gray-600 font-medium">{{ progress_percent }}% complete</span>
+            <span class="text-sm text-gray-600 font-medium">{{ width_percentage|default:0 }}% complete</span>
         </div>
-        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2 overflow-hidden">
-            {% if progress_percent <= 25 %}
-                <div class="bg-blue-600 h-2.5 rounded-full w-1/4"></div>
-            {% elif progress_percent <= 50 %}
-                <div class="bg-blue-600 h-2.5 rounded-full w-2/4"></div>
-            {% elif progress_percent <= 75 %}
-                <div class="bg-blue-600 h-2.5 rounded-full w-3/4"></div>
-            {% else %}
-                <div class="bg-blue-600 h-2.5 rounded-full w-full"></div>
-            {% endif %}
+
+        <!-- Progress bar using Tailwind classes -->
+        <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden relative">
+            <!-- Inner colored bar with dynamic width using absolute positioning -->
+            <div class="absolute top-0 left-0 h-2.5 bg-blue-600 rounded-full transition-all duration-500" 
+                 {% if width_percentage > 100 %}
+                 data-width="100"
+                 {% else %}
+                 data-width="{{ width_percentage|default:0 }}"
+                 {% endif %}
+            ></div>
         </div>
+        <!-- Add script to handle progress bar width -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const progressBar = document.querySelector('[data-width]');
+                if (progressBar) {
+                    const width = progressBar.getAttribute('data-width');
+                    progressBar.style.width = width + '%';
+                }
+            });
+        </script>
     </div>
 
     <div class="prose max-w-none mb-8 bg-gray-50 p-6 rounded-lg border border-gray-200">
@@ -89,31 +99,46 @@
 
     {% if campaign.status == 'active' %}
         {% if user.is_authenticated and user.role == 'donor' and not user.is_staff %}
-            <div class="my-8 bg-white p-6 shadow-md rounded-lg border border-blue-100">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Make a Donation</h2>
+            <div class="my-8 bg-white p-6 shadow-md rounded-lg border border-blue-100 transition-all duration-300 hover:shadow-lg">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Make a Donation</h2>
+                <div class="h-1 w-24 bg-blue-600 mb-6"></div>
                 <form action="{% url 'funding:campaign_donate' campaign.pk %}" method="post" class="space-y-4">
                     {% csrf_token %}
                     <div class="grid grid-cols-1 gap-4">
                         {% for field in donation_form %}
                             <div class="mb-4">
-                                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
-                                {{ field }}
+                                <label for="{{ field.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1">{{ field.label }}</label>
+                                <div class="relative rounded-md shadow-sm">
+                                    {{ field|safe|add_class:"mt-1 w-full py-3 px-4 border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:ring-opacity-50 rounded-md shadow-sm transition duration-200" }}
+                                    {% if field.name == 'amount' %}
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">$</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
                                 {% if field.help_text %}
-                                    <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+                                    <p class="mt-1 text-xs text-gray-500 italic">{{ field.help_text }}</p>
                                 {% endif %}
                                 {% for error in field.errors %}
-                                    <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+                                    <div class="mt-1 flex items-center text-xs text-red-600">
+                                        <svg class="w-4 h-4 mr-1 text-red-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        {{ error }}
+                                    </div>
                                 {% endfor %}
                             </div>
                         {% endfor %}
                     </div>
-                    <div class="flex justify-end">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none transition duration-200">
-                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"></path>
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"></path>
-                            </svg>
-                            Pledge Donation
+                    <div class="flex justify-end mt-6">
+                        <button type="submit" class="group relative inline-flex items-center px-6 py-3 border border-transparent shadow-lg text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105">
+                            <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                                <svg class="h-5 w-5 text-blue-400 group-hover:text-blue-300 transition ease-in-out duration-200" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"></path>
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"></path>
+                                </svg>
+                            </span>
+                            <span class="pl-8">Pledge Donation</span>
                         </button>
                     </div>
                 </form>

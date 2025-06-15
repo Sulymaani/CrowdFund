@@ -3,6 +3,13 @@
 
 {% block title %}{{ page_title }} - CrowdFund{% endblock %}
 
+{% block extra_head %}
+    {% load static %}
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="{% static 'js/dashboard-charts.js' %}"></script>
+{% endblock %}
+
 {% block content %}
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
@@ -15,115 +22,276 @@
         </a>
     </div>
 
-    <!-- KPI Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-green-500">
-            <h3 class="text-lg font-semibold text-gray-500">Total Raised</h3>
-            <p class="text-3xl font-bold text-green-600">${{ kpis.total_raised|intcomma }}</p>
-        </div>
-        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-blue-500">
-            <h3 class="text-lg font-semibold text-gray-500">Active Campaigns</h3>
-            <p class="text-3xl font-bold text-blue-600">{{ kpis.active_campaigns }}</p>
-        </div>
-        <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-purple-500">
-            <h3 class="text-lg font-semibold text-gray-500">Unique Donors</h3>
-            <p class="text-3xl font-bold text-purple-600">{{ kpis.total_donors }}</p>
+    <!-- KPI Stats & Overview -->
+    <div class="mb-10">
+        <!-- Main stats with sparkline trends -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Total Raised KPI Card -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:translate-y-[-5px]">
+                <div class="p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider">Total Raised</h3>
+                            <p class="text-3xl font-bold mt-1 text-green-600">${{ kpis.total_raised|intcomma }}</p>
+                            <p class="text-sm text-gray-500 mt-2">+{{ kpis.raised_percentage|default:"0" }}% from last month</p>
+                        </div>
+                        <div class="p-3 rounded-full bg-green-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4 h-16">
+                        <canvas id="donationsTrendSparkline" data-trend="{{ kpis.donations_trend|safe }}"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Campaigns KPI Card -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:translate-y-[-5px]">
+                <div class="p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider">Active Campaigns</h3>
+                            <p class="text-3xl font-bold mt-1 text-blue-600">{{ kpis.active_campaigns }}</p>
+                            <p class="text-sm text-gray-500 mt-2">{{ kpis.campaigns_pending|default:"0" }} waiting approval</p>
+                        </div>
+                        <div class="p-3 rounded-full bg-blue-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4 h-16">
+                        <canvas id="campaignsTrendSparkline" data-trend="{{ kpis.campaigns_trend|safe }}"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Unique Donors KPI Card -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:translate-y-[-5px]">
+                <div class="p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-400 uppercase tracking-wider">Unique Donors</h3>
+                            <p class="text-3xl font-bold mt-1 text-purple-600">{{ kpis.total_donors }}</p>
+                            <p class="text-sm text-gray-500 mt-2">{{ kpis.new_donors|default:"0" }} new this month</p>
+                        </div>
+                        <div class="p-3 rounded-full bg-purple-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4 h-16">
+                        <canvas id="donorsTrendSparkline" data-trend="{{ kpis.donors_trend|safe }}"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Data Visualization Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+        <!-- Chart Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+            <div class="bg-white shadow-lg rounded-xl overflow-hidden p-6 transition-all duration-300 hover:shadow-xl">
+                <h3 class="text-xl font-bold mb-4 flex items-center justify-between">
+                    <span>Donation Trends</span>
+                    <div class="flex space-x-2">
+                        <button class="text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded-md" onclick="switchChartPeriod('week')">Week</button>
+                        <button class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md" onclick="switchChartPeriod('month')">Month</button>
+                        <button class="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-md" onclick="switchChartPeriod('year')">Year</button>
+                    </div>
+                </h3>
+                <div class="h-80">
+                    <canvas id="donationChart" data-trends="{{ kpis.donations_chart_data|safe }}"></canvas>
+                </div>
+            </div>
+            
+            <div class="bg-white shadow-lg rounded-xl overflow-hidden p-6 transition-all duration-300 hover:shadow-xl">
+                <h3 class="text-xl font-bold mb-4 flex items-center justify-between">
+                    <span>Donation Sources</span>
+                    <span class="text-sm font-normal text-gray-500">Last 30 days</span>
+                </h3>
+                <div class="h-80">
+                    <canvas id="donationSourcesChart" data-sources="{{ kpis.donation_sources|default:'[]'|safe }}"></canvas>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mt-4 text-sm">
+                    <div class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-blue-500 inline-block mr-2"></span>
+                        <span>Direct</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-green-500 inline-block mr-2"></span>
+                        <span>Social Media</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block mr-2"></span>
+                        <span>Website</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-3 h-3 rounded-full bg-purple-500 inline-block mr-2"></span>
+                        <span>Other</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Donations Chart -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-lg font-semibold mb-4">Monthly Donations</h2>
+            <div class="h-72">
+                <canvas id="monthlyDonationsChart" data-donations="{&quot;labels&quot;: [&quot;Jan&quot;, &quot;Feb&quot;, &quot;Mar&quot;, &quot;Apr&quot;, &quot;May&quot;, &quot;Jun&quot;], &quot;values&quot;: [{{ kpis.monthly_donations|default:"1200, 1900, 3000, 2400, 1800, 3200"|safe }}]}"></canvas>
+            </div>
+        </div>
+
+        <!-- Campaign Performance Chart -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-lg font-semibold mb-4">Campaign Performance</h2>
+            <div class="h-72">
+                <canvas id="campaignPerformanceChart" data-campaigns="{&quot;labels&quot;: [{% for campaign in campaigns|slice:":5" %}&quot;{{ campaign.title|escapejs }}&quot;{% if not forloop.last %},{% endif %}{% endfor %}], &quot;raised&quot;: [{% for campaign in campaigns|slice:":5" %}{{ campaign.total_raised|default:0 }}{% if not forloop.last %},{% endif %}{% endfor %}], &quot;goals&quot;: [{% for campaign in campaigns|slice:":5" %}{{ campaign.goal }}{% if not forloop.last %},{% endif %}{% endfor %}]}"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaigns Section Header -->
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-semibold">My Campaigns</h2>
-        <div>
-            <a href="{% url 'org:campaigns' %}" class="text-blue-600 hover:text-blue-800 mr-4">View All Campaigns</a>
-            <a href="{% url 'org:donations_list' %}" class="text-blue-600 hover:text-blue-800">View Donations</a>
+        <div class="flex items-center space-x-4">
+            <a href="{% url 'org:campaigns' %}" class="text-blue-600 hover:text-blue-800 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                View All Campaigns
+            </a>
+            <a href="{% url 'org:donations_list' %}" class="text-blue-600 hover:text-blue-800 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                View Donations
+            </a>
         </div>
     </div>
     
     {% if campaigns %}
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm">
                     <thead>
                         <tr>
-                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Campaign</th>
-                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Goal</th>
-                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Progress</th>
-                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                            <th class="px-6 py-4 border-b border-gray-100 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Campaign</th>
+                            <th class="px-6 py-4 border-b border-gray-100 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-4 border-b border-gray-100 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Goal</th>
+                            <th class="px-6 py-4 border-b border-gray-100 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+                            <th class="px-6 py-4 border-b border-gray-100 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for campaign in campaigns %}
-                            <tr class="{% cycle 'bg-white' 'bg-gray-50' %}">
-                                <td class="px-5 py-5 border-b border-gray-200 text-sm">
-                                    <a href="{% url 'org:campaign_detail' campaign.pk %}" class="text-blue-600 hover:text-blue-800 font-medium">
-                                        {{ campaign.title }}
-                                    </a>
-                                    <p class="text-gray-500 text-xs">Created: {{ campaign.created_at|date:"M d, Y" }}</p>
-                                </td>
-                                <td class="px-5 py-5 border-b border-gray-200 text-sm">
-                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                        {% if campaign.status == 'active' %}bg-green-400 text-white{% endif %}
-                                        {% if campaign.status == 'pending' %}bg-yellow-400 text-white{% endif %}
-                                        {% if campaign.status == 'closed' %}bg-slate-500 text-white{% endif %}
-                                        {% if campaign.status == 'rejected' %}bg-red-400 text-white{% endif %}
-                                        {% if campaign.status == 'draft' %}bg-gray-400 text-white{% endif %}
-                                    ">
-                                        {{ campaign.get_status_display }}
-                                    </span>
-                                </td>
-                                <td class="px-5 py-5 border-b border-gray-200 text-sm">
-                                    ${{ campaign.goal|intcomma }}
-                                </td>
-                                <td class="px-5 py-5 border-b border-gray-200 text-sm">
+                            <tr class="{% cycle 'bg-white' 'bg-gray-50' %} hover:bg-blue-50 transition-colors duration-200">
+                                <td class="px-6 py-5 border-b border-gray-200 text-sm">
                                     <div class="flex items-center">
-                                        <div class="flex-1 mr-2">
-                                              {% with raised=campaign.total_raised|default:0 %}
-                                                <!-- Simple progress bar without inline styles -->
-                                                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                                  {% if campaign.goal > 0 %}
-                                                    {% widthratio raised campaign.goal 100 as percent %}
-                                                    <div class="bg-blue-600 h-2.5 rounded-full" 
-                                                         {% if percent == 0 %}
-                                                           style="width: 0"
-                                                         {% elif percent <= 25 %}
-                                                           style="width: 25%"
-                                                         {% elif percent <= 50 %}
-                                                           style="width: 50%"
-                                                         {% elif percent <= 75 %}
-                                                           style="width: 75%"
-                                                         {% else %}
-                                                           style="width: 100%"
-                                                         {% endif %}
-                                                    ></div>
-                                                  {% else %}
-                                                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: 0"></div>
-                                                  {% endif %}
-                                                </div>
-                                                
-                                                <!-- Progress text -->
-                                                <div class="flex justify-between text-xs mt-1">
-                                                  <span>${{ raised|intcomma }}</span>
-                                                  <span>
-                                                    {% if campaign.goal > 0 %}
-                                                      {% widthratio raised campaign.goal 100 %}%
-                                                    {% else %}
-                                                      0%
-                                                    {% endif %}
-                                                  </span>
-                                                </div>
-                                              {% endwith %}
+                                        {% if campaign.cover_image %}
+                                            <div class="flex-shrink-0 h-10 w-10 mr-3">
+                                                <img class="h-10 w-10 rounded-lg object-cover" src="{{ campaign.cover_image.url }}" alt="{{ campaign.title }}">
+                                            </div>
+                                        {% else %}
+                                            <div class="flex-shrink-0 h-10 w-10 mr-3 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <a href="{% url 'org:campaign_detail' campaign.pk %}" class="text-blue-600 hover:text-blue-800 font-medium" title="View campaign details">
+                                                {{ campaign.title }}
+                                            </a>
+                                            <p class="text-gray-500 text-xs">Created {{ campaign.created_at|date:"M d, Y" }}</p>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-5 py-5 border-b border-gray-200 text-sm">
-                                    {% if campaign.status == 'draft' or campaign.status == 'rejected' %}
-                                    <a href="{% url 'org:campaign_edit' campaign.pk %}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                                    {% endif %}
-                                    
-                                    {% if campaign.status == 'active' %}
-                                    <a href="{% url 'org:campaign_close' campaign.pk %}" class="text-red-600 hover:text-red-900">Close</a>
-                                    {% endif %}
+                                <td class="px-6 py-5 border-b border-gray-200 text-sm">
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full shadow-sm
+                                        {% if campaign.status == 'active' %}bg-green-100 text-green-800 ring-1 ring-green-400{% endif %}
+                                        {% if campaign.status == 'pending' %}bg-yellow-100 text-yellow-800 ring-1 ring-yellow-400{% endif %}
+                                        {% if campaign.status == 'rejected' %}bg-red-100 text-red-800 ring-1 ring-red-400{% endif %}
+                                        {% if campaign.status == 'closed' %}bg-gray-100 text-gray-800 ring-1 ring-gray-400{% endif %}" 
+                                        title="Campaign is {{ campaign.status }}">
+                                        <div class="flex items-center">
+                                            <div class="h-2 w-2 rounded-full mr-1
+                                            {% if campaign.status == 'active' %}bg-green-500{% endif %}
+                                            {% if campaign.status == 'pending' %}bg-yellow-500{% endif %}
+                                            {% if campaign.status == 'rejected' %}bg-red-500{% endif %}
+                                            {% if campaign.status == 'closed' %}bg-gray-500{% endif %}"></div>
+                                            {{ campaign.status|title }}
+                                        </div>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-5 border-b border-gray-200 text-sm">
+                                    <div class="flex items-center">
+                                        <span class="font-medium text-gray-900">${{ campaign.goal|floatformat:0|intcomma }}</span>
+                                        <span class="ml-2" title="Goal amount for this campaign">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-5 border-b border-gray-200 text-sm">
+                                    {% with total_raised=campaign.total_raised|default:0 %}
+                                        {% if campaign.goal > 0 %}
+                                            {% widthratio total_raised campaign.goal 100 as percent %}
+                                            <div class="flex items-center mb-1" title="${{ total_raised|intcomma }} raised of ${{ campaign.goal|intcomma }} goal">
+                                                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
+                                                    <div {% if percent >= 100 %}class="bg-green-500 h-3 rounded-full transition-all duration-500"{% else %}class="bg-blue-600 h-3 rounded-full transition-all duration-500"{% endif %} 
+                                                        style="width: {% if percent > 100 %}100{% else %}{{ percent }}{% endif %}%"></div>
+                                                </div>
+                                                <span class="text-sm font-medium {% if percent >= 100 %}text-green-700{% else %}text-blue-700{% endif %} ml-2">
+                                                    {{ percent }}%
+                                                </span>
+                                            </div>
+                                            <div class="flex justify-between text-xs text-gray-500">
+                                                <span>${{ total_raised|floatformat:0|intcomma }}</span>
+                                                {% if campaign.end_date %}
+                                                    <span class="text-orange-500">
+                                                        {{ campaign.end_date|timeuntil }} left
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <span class="text-gray-500 italic">No goal set</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                <td class="px-6 py-5 border-b border-gray-200 text-sm">
+                                    <div class="flex items-center space-x-2">
+                                        <a href="{% url 'org:campaign_detail' campaign.pk %}" class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" title="View campaign details">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                            View
+                                        </a>
+                                        
+                                        {% if campaign.status == 'draft' or campaign.status == 'rejected' %}
+                                        <a href="{% url 'org:campaign_edit' campaign.pk %}" class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" title="Edit this campaign">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                            Edit
+                                        </a>
+                                        {% endif %}
+                                        
+                                        {% if campaign.status == 'active' %}
+                                        <a href="{% url 'org:campaign_close' campaign.pk %}" class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" title="Close this campaign">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                            Close
+                                        </a>
+                                        {% endif %}
+                                    </div>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -132,15 +300,20 @@
             </div>
         </div>
     {% else %}
-        <div class="text-center bg-white p-12 rounded-lg shadow-md">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">No campaigns yet</h3>
-            <p class="mt-1 text-sm text-gray-500">Get started by creating your first campaign.</p>
+        <div class="text-center bg-white p-12 rounded-xl shadow-lg border border-dashed border-gray-200">
+            <div class="bg-blue-50 rounded-full h-20 w-20 flex items-center justify-center mx-auto mb-4">
+                <svg class="h-10 w-10 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">No campaigns yet</h3>
+            <p class="mt-2 text-gray-500 max-w-sm mx-auto">Start your fundraising journey by creating your first campaign. It only takes a few minutes to get started.</p>
             <div class="mt-6">
-                <a href="{% url 'org:campaign_new' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    Create Campaign
+                <a href="{% url 'org:campaign_new' %}" class="inline-flex items-center px-5 py-3 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
+                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Create Your First Campaign
                 </a>
             </div>
         </div>

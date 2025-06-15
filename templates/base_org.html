@@ -50,29 +50,22 @@
 </head>
 <body>
     <!-- Organization Header -->
-    <header class="org-header py-4">
-        <div class="container mx-auto px-4 flex justify-between items-center">
-            <div class="flex items-center">
-                <div class="text-2xl font-bold">
-                    <a href="{% url 'org:dashboard' %}" class="text-white hover:text-blue-200">Crowdfund</a>
-                </div>
-                <span class="ml-2 bg-blue-400 text-white text-xs px-2 py-1 rounded">Organization Portal</span>
-            </div>
-            
-            <nav class="hidden md:block">
+    <nav class="org-header p-4 text-white">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="{% url 'org:dashboard' %}" class="text-lg font-semibold">CrowdFund Organization Portal</a>
+            <div class="flex items-center space-x-4">
                 {% if user.is_authenticated %}
                     {% if user.role == 'admin' %}
-                        <a href="{% url 'core_admin:admin_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">Admin Dashboard</a>
-                        <a href="{% url 'core_admin:admin_campaign_queue' %}" class="px-3 py-2 rounded hover:bg-blue-700">Review Campaigns</a>
-                        <a href="{% url 'core_admin:admin_organisations' %}" class="px-3 py-2 rounded hover:bg-blue-700">Organisations</a>
+                        <a href="{% url 'core_admin:admin_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">Dashboard</a>
+                        <a href="{% url 'core_admin:admin_campaign_queue' %}" class="px-3 py-2 rounded hover:bg-blue-700">Campaign Queue</a>
                     {% elif user.role == 'org_owner' %}
-                        <a href="{% url 'org:dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Dashboard</a>
-                        <a href="{% url 'org:campaigns' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Campaigns</a>
-                        <a href="{% url 'org:donations_list' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Donations</a>
+                        <a href="{% url 'org:dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">Dashboard</a>
+                        <a href="{% url 'org:campaigns' %}" class="px-3 py-2 rounded hover:bg-blue-700">Campaigns</a>
+                        <a href="{% url 'org:donations_list' %}" class="px-3 py-2 rounded hover:bg-blue-700">Donations</a>
                         <a href="{% url 'org:campaign_new' %}" class="px-3 py-2 rounded hover:bg-blue-700">Create Campaign</a>
-                        <a href="{% url 'org:settings' %}?edit=true" class="px-3 py-2 rounded hover:bg-blue-700">Settings</a>
+                        <a href="{% url 'org:settings' %}" class="px-3 py-2 rounded hover:bg-blue-700">Settings</a>
                     {% elif user.role == 'donor' %}
-                        <a href="{% url 'donor_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">My Dashboard</a>
+                        <a href="{% url 'donor_dashboard' %}" class="px-3 py-2 rounded hover:bg-blue-700">Dashboard</a>
                         <a href="{% url 'funding:campaign_list' %}" class="px-3 py-2 rounded hover:bg-blue-700">Browse Campaigns</a>
                     {% endif %}
                     
@@ -81,7 +74,7 @@
                         <form method="post" action="{% url 'core_admin:stop_impersonating' %}" class="inline">
                             {% csrf_token %}
                             <button type="submit" class="text-white text-sm px-3 py-1 bg-red-700 rounded hover:bg-red-800">
-                                Return to Admin
+                                Stop Impersonating
                             </button>
                         </form>
                     {% else %}
@@ -90,15 +83,12 @@
                             <button type="submit" class="px-3 py-2 rounded hover:bg-blue-700 bg-transparent border-none text-white cursor-pointer">Logout</button>
                         </form>
                     {% endif %}
-                    
-                    <span class="ml-2 text-white">Hi, {{ user.username }}</span>
                 {% else %}
                     <a href="{% url 'accounts:login' %}" class="px-3 py-2 rounded hover:bg-blue-700">Login</a>
-                    <a href="{% url 'accounts:register_donor' %}" class="px-3 py-2 rounded hover:bg-blue-700">Register</a>
                 {% endif %}
-            </nav>
+            </div>
         </div>
-    </header>
+    </nav>
 
     <!-- Flash Messages -->
     {% if messages %}
@@ -116,27 +106,8 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Organization Footer -->
-    <footer class="org-footer py-6">
-        <div class="container mx-auto px-4">
-            <div class="flex flex-col md:flex-row justify-between">
-                <div class="mb-4 md:mb-0">
-                    <h3 class="text-lg font-bold mb-2">CrowdFund Organization Portal</h3>
-                    <p class="text-sm">Manage your campaigns and track your fundraising progress</p>
-                </div>
-                <div>
-                    <h4 class="text-sm font-bold mb-2">Quick Links</h4>
-                    <ul class="text-sm">
-                        <li><a href="{% url 'org:dashboard' %}" class="text-blue-200 hover:text-white">Dashboard</a></li>
-                        <li><a href="{% url 'org:campaign_new' %}" class="text-blue-200 hover:text-white">Create Campaign</a></li>
-                        <li><a href="{% url 'org:settings' %}?edit=true" class="text-blue-200 hover:text-white">Organization Settings</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="mt-4 pt-4 border-t border-blue-700 text-sm">
-                <p>&copy; {% now "Y" %} CrowdFund. All rights reserved.</p>
-            </div>
-        </div>
+    <footer class="org-footer text-white text-center p-4 mt-8">
+        <p>&copy; {% now "Y" %} CrowdFund Platform. Organization Portal.</p>
     </footer>
 </body>
 </html>

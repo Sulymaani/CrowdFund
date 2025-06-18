@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Donation Details | CrowdFund{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-4">
+        <a href="{% url 'donor:dashboard' %}" class="inline-flex items-center text-blue-600 hover:underline">
+            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to My Donations
+        </a>
+    </div>
+    
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Donation Details</h1>
+        <div class="bg-blue-100 text-blue-800 py-1 px-3 rounded-full text-sm font-semibold">
+            Reference: {{ donation.reference_number }}
+        </div>
+    </div>
+
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50">
+            <h2 class="text-lg leading-6 font-medium text-gray-900">Donation Information</h2>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Details about your contribution.</p>
+        </div>
+        <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Amount</dt>
+                    <dd class="mt-1 text-lg text-green-600 font-semibold">${{ donation.amount|floatformat:2|intcomma }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Date</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ donation.created_at|date:"F j, Y, g:i a" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Payment Method</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ donation.payment_method|default:"Credit Card" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Status</dt>
+                    <dd class="mt-1">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full 
+                        {% if donation.status == 'completed' %}bg-green-100 text-green-800
+                        {% elif donation.status == 'pending' %}bg-yellow-100 text-yellow-800
+                        {% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ donation.get_status_display }}
+                        </span>
+                    </dd>
+                </div>
+                {% if donation.notes %}
+                <div class="sm:col-span-2">
+                    <dt class="text-sm font-medium text-gray-500">Notes</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ donation.notes }}</dd>
+                </div>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+    
+    <!-- Campaign Information -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 bg-gray-50">
+            <h2 class="text-lg leading-6 font-medium text-gray-900">Campaign Information</h2>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Details about the campaign you supported.</p>
+        </div>
+        <div class="border-t border-gray-200">
+            <div class="px-4 py-5 sm:px-6">
+                <div class="flex items-center mb-4">
+                    {% if donation.campaign.image %}
+                    <img src="{{ donation.campaign.image.url }}" alt="{{ donation.campaign.title }}" class="h-16 w-16 object-cover rounded-lg mr-4">
+                    {% else %}
+                    <div class="h-16 w-16 bg-gray-200 rounded-lg mr-4 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900">{{ donation.campaign.title }}</h3>
+                        <p class="text-sm text-gray-500">{{ donation.campaign.organisation.name }}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{% url 'donor:campaign_detail' donation.campaign.pk %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        View Campaign
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

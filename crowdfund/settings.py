@@ -57,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'accounts.middleware.AuthRequiredMiddleware', # Custom middleware for auth redirect
+    'accounts.middleware.ServerRestartMiddleware', # Force logout on server restart
 ]
 
 ROOT_URLCONF = 'crowdfund.urls'
@@ -69,8 +70,9 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
-                                'django.template.context_processors.request',
+                'django.template.context_processors.request',
                 'core.context_processors.impersonation_status',
+                'core.context_processors.user_role_context',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],

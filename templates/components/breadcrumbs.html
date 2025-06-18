@@ -1,12 +1,15 @@
 <!-- Reusable breadcrumbs component -->
 <nav class="bg-gray-50 p-3 mb-5 rounded-lg shadow-sm" aria-label="Breadcrumb">
   <ol class="flex flex-wrap text-sm">
+    <!-- Optional home link - will only show if home_url is provided -->
+    {% if home_url %}
     <li class="flex items-center">
-      <a href="{% url 'org:dashboard' %}" class="text-blue-600 hover:text-blue-800 font-medium">
-        Dashboard
+      <a href="{{ home_url }}" class="text-blue-600 hover:text-blue-800 font-medium">
+        {{ home_title|default:"Home" }}
       </a>
       <span class="text-gray-400 mx-2">/</span>
     </li>
+    {% endif %}
     
     {% for crumb in breadcrumbs %}
     <li class="flex items-center">

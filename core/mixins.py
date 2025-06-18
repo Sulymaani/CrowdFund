@@ -1,8 +1,12 @@
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
-from django.contrib import messages # Added for messages in new mixin
+from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect
-from django.urls import reverse_lazy # Added for reverse_lazy
+from django.urls import reverse_lazy
+
+# Import new constants and helpers
+from utils.constants import UserRoles, Messages
+from utils.url_helpers import get_namespaced_url, Namespaces, URLNames
 
 class StaffRequiredMixin(UserPassesTestMixin):
     """
@@ -50,7 +54,7 @@ class OrganisationOwnerRequiredMixin(UserPassesTestMixin):
     """
     def test_func(self):
         user = self.request.user
-        if not user.is_authenticated or user.is_staff or user.role != 'org_owner':
+        if not user.is_authenticated or user.is_staff or user.role != UserRoles.ORG_OWNER:
             return False
         
         # Check if user has an organization and it's active
@@ -61,18 +65,18 @@ class OrganisationOwnerRequiredMixin(UserPassesTestMixin):
 
     def handle_no_permission(self):
         if not self.request.user.is_authenticated:
-            return redirect('login')
+            return redirect(get_namespaced_url(Namespaces.ACCOUNTS, URLNames.Accounts.LOGIN))
             
         user = self.request.user
-        if user.role != 'org_owner':
-            messages.error(self.request, "You must be an organisation owner to access this page.")
+        if user.role != UserRoles.ORG_OWNER:
+            messages.error(self.request, Messages.ERROR_PERMISSIONS)
             raise PermissionDenied("You must be an organisation owner to access this page.")
         
         if hasattr(user, 'organisation') and user.organisation and not user.organisation.is_active:
             messages.error(self.request, "Your organisation is inactive. Please contact an administrator.")
             raise PermissionDenied("Your organisation is inactive. Please contact an administrator.")
             
-        raise PermissionDenied("You do not have permission to access this page.")
+        raise PermissionDenied(Messages.ERROR_PERMISSIONS)
 
 
 class PublicOrNonOrgOwnerRequiredMixin(UserPassesTestMixin):
@@ -81,9 +85,9 @@ class PublicOrNonOrgOwnerRequiredMixin(UserPassesTestMixin):
     already an organisation owner with an existing organisation.
     Used for the Organisation Application form.
     """
-    login_url = reverse_lazy('login') # Default login URL
+    login_url = reverse_lazy(get_namespaced_url(Namespaces.ACCOUNTS, URLNames.Accounts.LOGIN))
     permission_denied_message = "You are already associated with an organisation or have an application pending."
-    redirect_url_on_permission_denied = 'funding:campaign_list'
+    redirect_url_on_permission_denied = 'funding:campaign_list' # TODO: Use constant when created
 
     def test_func(self):
         user = self.request.user
@@ -92,7 +96,7 @@ class PublicOrNonOrgOwnerRequiredMixin(UserPassesTestMixin):
         
         # Allow authenticated users if they are not an org_owner or don't have an org yet
         # This covers donors, general users, or org_owners whose previous org was deleted/unlinked
-        if user.role != 'org_owner' or not user.organisation:
+        if user.role != UserRoles.ORG_OWNER or not user.organisation:
             return True
         
         # Deny if user is an org_owner AND already has an organisation
@@ -118,23 +122,13 @@ class DonorRequiredMixin(UserPassesTestMixin):
         user = self.request.user
         return (
             user.is_authenticated and
-            user.role == 'donor' and
+            user.role == UserRoles.DONOR and
             not user.is_staff
         )
 
     def handle_no_permission(self):
         if not self.request.user.is_authenticated:
-            return redirect('login')
-        raise PermissionDenied("You must be a donor to access this page.")
-        return (
-            user.is_authenticated and
-            hasattr(user, 'role') and
-            user.role == 'donor'
-        )
-
-    def handle_no_permission(self):
-        if not self.request.user.is_authenticated:
-            return super().handle_no_permission()
+            return redirect(get_namespaced_url(Namespaces.ACCOUNTS, URLNames.Accounts.LOGIN))
         
         # For authenticated non-donors, raise a 403 Forbidden error.
-        raise PermissionDenied("Only donors are allowed to make donations.")
+        raise PermissionDenied("Only donors are allowed to access this page.")

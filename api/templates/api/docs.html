@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">CrowdFund API Documentation</h1>
+    
+    <div class="alert alert-info">
+        <p><strong>Note:</strong> This is the documentation for the CrowdFund REST API. All endpoints require proper authentication unless specified otherwise.</p>
+    </div>
+
+    <h2 class="mt-5">Available Endpoints</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="h5 mb-0">Campaigns</h3>
+        </div>
+        <div class="card-body">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                    <strong>GET /api/v1/campaigns/</strong> - List all campaigns
+                    <p class="text-muted small mb-0">Supports filtering by status, organisation, and active state.</p>
+                </li>
+                <li class="list-group-item">
+                    <strong>GET /api/v1/campaigns/{id}/</strong> - Retrieve a specific campaign
+                </li>
+                <li class="list-group-item">
+                    <strong>POST /api/v1/campaigns/</strong> - Create a new campaign (requires authentication)
+                </li>
+                <li class="list-group-item">
+                    <strong>PUT /api/v1/campaigns/{id}/</strong> - Update a campaign (requires authentication)
+                </li>
+                <li class="list-group-item">
+                    <strong>GET /api/v1/campaigns/{id}/donations/</strong> - List all donations for a campaign
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="h5 mb-0">Organizations</h3>
+        </div>
+        <div class="card-body">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                    <strong>GET /api/v1/organizations/</strong> - List all active organizations
+                </li>
+                <li class="list-group-item">
+                    <strong>GET /api/v1/organizations/{id}/</strong> - Retrieve a specific organization
+                </li>
+                <li class="list-group-item">
+                    <strong>POST /api/v1/organizations/</strong> - Create a new organization (admin only)
+                </li>
+                <li class="list-group-item">
+                    <strong>GET /api/v1/organizations/{id}/campaigns/</strong> - List all campaigns for an organization
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="h5 mb-0">Donations</h3>
+        </div>
+        <div class="card-body">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                    <strong>GET /api/v1/donations/</strong> - List donations (filters based on authentication)
+                </li>
+                <li class="list-group-item">
+                    <strong>POST /api/v1/donations/</strong> - Create a new donation (requires authentication)
+                </li>
+                <li class="list-group-item">
+                    <strong>GET /api/v1/donations/{id}/</strong> - Retrieve a specific donation
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="h5 mb-0">Tags</h3>
+        </div>
+        <div class="card-body">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                    <strong>GET /api/v1/tags/</strong> - List all tags
+                </li>
+                <li class="list-group-item">
+                    <strong>GET /api/v1/tags/{slug}/</strong> - Retrieve a specific tag by slug
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="h5 mb-0">Users</h3>
+        </div>
+        <div class="card-body">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">
+                    <strong>GET /api/v1/users/</strong> - List all users (admin only)
+                </li>
+                <li class="list-group-item">
+                    <strong>GET /api/v1/users/me/</strong> - Retrieve current authenticated user
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <h2 class="mt-5">Authentication</h2>
+    <div class="card mb-4">
+        <div class="card-body">
+            <p>The API supports two authentication methods:</p>
+            <ul>
+                <li><strong>Session Authentication</strong> - Used when accessing the API from the browser</li>
+                <li><strong>Token Authentication</strong> - Used for programmatic access</li>
+            </ul>
+            <p>To use token authentication, include the token in the Authorization header:</p>
+            <pre><code>Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b</code></pre>
+        </div>
+    </div>
+</div>
+{% endblock %}

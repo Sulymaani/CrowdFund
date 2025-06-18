@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} - CrowdFund{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumbs -->
+    {% include 'components/breadcrumbs.html' with home_url=home_url home_title="Home" breadcrumbs=breadcrumbs %}
+    
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold">{{ page_title }}</h1>
+            <div class="h-1 w-24 bg-blue-600 mt-2 mb-4"></div>
+            <p class="text-gray-600">Manage your donation history and track the impact of your contributions.</p>
+        </div>
+        <div class="flex space-x-2">
+            <a href="{% url 'donor:campaigns' %}" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                Browse Campaigns
+            </a>
+            <a href="{% url 'donor:organizations' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                Browse Organizations
+            </a>
+        </div>
+    </div>
+
+    {% if donations %}
+        <!-- Donations Summary Card -->
+        <div class="bg-white p-5 rounded-lg shadow-md mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="p-4 bg-blue-50 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-700">Total Donated</h3>
+                    <p class="text-2xl font-bold text-blue-600">${{ total_donated }}</p>
+                </div>
+                <div class="p-4 bg-green-50 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-700">Campaigns Supported</h3>
+                    <p class="text-2xl font-bold text-green-600">{{ campaigns_supported }}</p>
+                </div>
+                <div class="p-4 bg-purple-50 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-700">Last Donation</h3>
+                    <p class="text-lg font-medium text-purple-600">{{ last_donation_date|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Donations Table -->
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 class="text-lg font-semibold text-gray-700">Your Donation History</h2>
+            </div>
+            <table class="min-w-full leading-normal">
+                <thead>
+                    <tr>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Campaign</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Reference</th>
+                        <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for donation in donations %}
+                        <tr>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                <div class="flex items-center">
+                                    {% if donation.campaign.cover_image %}
+                                        <div class="flex-shrink-0 w-10 h-10 mr-3">
+                                            <img class="w-full h-full rounded-full object-cover" src="{{ donation.campaign.cover_image.url }}" alt="{{ donation.campaign.title }}">
+                                        </div>
+                                    {% endif %}
+                                    <a href="{% url 'donor:campaign_detail' donation.campaign.pk %}" class="text-blue-500 hover:text-blue-700 font-medium">
+                                        {{ donation.campaign.title }}
+                                    </a>
+                                </div>
+                            </td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                <span class="font-medium">${{ donation.amount }}</span>
+                            </td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                {{ donation.created_at|date:"d M Y, H:i" }}
+                            </td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                {{ donation.reference_number|default:"N/A" }}
+                            </td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                <a href="{% url 'donor:donation_detail' donation.reference_number %}" class="text-blue-500 hover:text-blue-700">
+                                    View Details
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="text-center bg-white p-12 rounded-lg shadow-md">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No donations yet</h3>
+            <p class="mt-1 text-sm text-gray-500">Get started by exploring active campaigns and making your first donation.</p>
+            <div class="mt-6">
+                <a href="{% url 'donor:campaigns' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Explore Campaigns
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

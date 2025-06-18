@@ -1,0 +1,95 @@
+{% extends 'base_org.html' %}
+{% load humanize %}
+
+{% block title %}Organization Dashboard - CrowdFund{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold">{{ organisation.name }}</h1>
+            <p class="text-gray-600">Campaign Dashboard</p>
+        </div>
+        <a href="{% url 'campaigns:create' %}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+            + Create New Campaign
+        </a>
+    </div>
+
+    <!-- Campaigns Section Header -->
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-semibold">My Campaigns</h2>
+        <div class="flex items-center space-x-4">
+            <a href="{% url 'campaigns:list' %}" class="text-blue-600 hover:text-blue-800 flex items-center">
+                View All Campaigns
+            </a>
+            <a href="{% url 'donations:org_list' %}" class="text-blue-600 hover:text-blue-800 flex items-center">
+                View Donations
+            </a>
+        </div>
+    </div>
+    
+    {% if campaigns %}
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+            <table class="min-w-full text-sm">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-4 border-b border-gray-100 bg-gray-50 text-left">Campaign</th>
+                        <th class="px-6 py-4 border-b border-gray-100 bg-gray-50 text-left">Status</th>
+                        <th class="px-6 py-4 border-b border-gray-100 bg-gray-50 text-left">Goal</th>
+                        <th class="px-6 py-4 border-b border-gray-100 bg-gray-50 text-left">Progress</th>
+                        <th class="px-6 py-4 border-b border-gray-100 bg-gray-50 text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for campaign in campaigns %}
+                        <tr>
+                            <td class="px-6 py-5 border-b border-gray-200 text-sm">
+                                <div class="flex items-center">
+                                    <div>
+                                        <a href="{% url 'campaigns:detail' campaign.pk %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                                            {{ campaign.title }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-5 border-b border-gray-200 text-sm">
+                                {{ campaign.status|title }}
+                            </td>
+                            <td class="px-6 py-5 border-b border-gray-200 text-sm">
+                                ${{ campaign.goal|floatformat:0|intcomma }}
+                            </td>
+                            <td class="px-6 py-5 border-b border-gray-200 text-sm">
+                                {% with total_raised=campaign.total_raised|default:0 %}
+                                    {% if campaign.goal > 0 %}
+                                        {% widthratio total_raised campaign.goal 100 as percent %}
+                                        {{ percent }}%
+                                    {% else %}
+                                        <span class="text-gray-500 italic">No goal set</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td class="px-6 py-5 border-b border-gray-200 text-sm">
+                                <a href="{% url 'campaigns:detail' campaign.pk %}" class="text-blue-600">View</a>
+                                
+                                {% if campaign.status == 'active' %}
+                                <a href="{% url 'campaigns:close' campaign.pk %}" class="text-red-600 ml-2">Close</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="text-center bg-white p-12 rounded-xl shadow-lg border border-dashed border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">No campaigns yet</h3>
+            <p class="mt-2 text-gray-500">Start your fundraising journey by creating your first campaign.</p>
+            <div class="mt-6">
+                <a href="{% url 'campaigns:create' %}" class="inline-flex items-center px-5 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700">
+                    Create Your First Campaign
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

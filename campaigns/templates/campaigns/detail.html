@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load static %}
+{% load formatting_helpers %}
+
+{% block title %}{{ campaign.title }} - CrowdFund{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Campaign Cover Image -->
+        <div class="col-md-12 mb-4">
+            {% if campaign.cover_image %}
+                <img src="{{ campaign.cover_image.url }}" class="img-fluid rounded" alt="{{ campaign.title }}" style="max-height: 300px; width: 100%; object-fit: cover;">
+            {% else %}
+                <div class="bg-light rounded p-5 text-center">
+                    <i class="fa fa-image fa-4x text-secondary"></i>
+                    <p class="mt-3">No cover image available</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Campaign Details -->
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h1 class="mb-0">{{ campaign.title }}</h1>
+                        <span class="badge bg-primary">{{ campaign.get_category_display }}</span>
+                    </div>
+                    
+                    <p class="text-muted">
+                        By <a href="{% url 'organizations:detail' pk=campaign.organisation.id %}">{{ campaign.organisation.name }}</a> | 
+                        Started {{ campaign.created_at|date:"M d, Y" }}
+                    </p>
+                    
+                    <div class="campaign-description my-4">
+                        {{ campaign.description|linebreaks }}
+                    </div>
+
+                    <div class="mt-4">
+                        {% if user.is_authenticated and user.role == 'DONOR' %}
+                            <a href="{% url 'donations:create' campaign_id=campaign.id %}" class="btn btn-primary btn-lg">Donate Now</a>
+                        {% elif not user.is_authenticated %}
+                            <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="btn btn-primary btn-lg">Login to Donate</a>
+                        {% endif %}
+                        
+                        <a href="{% url 'campaigns:list' %}" class="btn btn-outline-secondary btn-lg ms-2">Back to Campaigns</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Campaign Stats -->
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Campaign Progress</h5>
+                    
+                    <div class="progress mb-3">
+                        {% with width=progress_percentage|default:0 %}
+                        <div class="progress-bar" role="progressbar" style="width: {{ width }}%;" aria-valuenow="{{ width }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        {% endwith %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <div>
+                            <p class="mb-0 text-muted">Raised</p>
+                            <h4>${{ total_raised|floatformat:0 }}</h4>
+                        </div>
+                        <div>
+                            <p class="mb-0 text-muted">Goal</p>
+                            <h4>${{ campaign.funding_goal|floatformat:0 }}</h4>
+                        </div>
+                    </div>
+                    
+                    <p><i class="fa fa-users me-2"></i> {{ donor_count }} donor{{ donor_count|pluralize }}</p>
+                    <p><i class="fa fa-calendar me-2"></i> {{ campaign.days_active }} days active</p>
+
+                    {% if campaign.is_active %}
+                        <div class="alert alert-success">
+                            <i class="fa fa-check-circle me-2"></i> This campaign is active
+                        </div>
+                    {% elif campaign.is_closed %}
+                        <div class="alert alert-secondary">
+                            <i class="fa fa-times-circle me-2"></i> This campaign is closed
+                        </div>
+                    {% elif campaign.is_pending %}
+                        <div class="alert alert-warning">
+                            <i class="fa fa-clock me-2"></i> This campaign is pending review
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Donors -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Recent Donors</h5>
+                    
+                    {% if recent_donations %}
+                        <ul class="list-group list-group-flush">
+                            {% for donation in recent_donations %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {% if donation.anonymous %}
+                                        Anonymous
+                                    {% else %}
+                                        {{ donation.donor.get_full_name|default:donation.donor.username }}
+                                    {% endif %}
+                                    <span class="badge bg-primary rounded-pill">${{ donation.amount }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-center text-muted my-4">No donations yet. Be the first to donate!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

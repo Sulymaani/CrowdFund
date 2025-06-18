@@ -16,7 +16,7 @@ from .models import Campaign, Donation, Organisation
 
 class AdminActiveCampaignsListView(StaffRequiredMixin, ListView):
     model = Campaign
-    template_name = 'funding/admin/active_campaigns.html'
+    template_name = 'admin_dashboard/active_campaigns.html'
     context_object_name = 'campaigns'
     paginate_by = 20
 
@@ -39,7 +39,7 @@ class AdminActiveCampaignsListView(StaffRequiredMixin, ListView):
 
 class AdminOrganisationsListView(StaffRequiredMixin, ListView):
     model = Organisation
-    template_name = 'funding/admin/organisations.html'
+    template_name = 'admin_dashboard/organisations.html'
     context_object_name = 'organisations'
     paginate_by = 20
 
@@ -76,7 +76,7 @@ class AdminOrganisationsListView(StaffRequiredMixin, ListView):
 
 class AdminDonorsListView(StaffRequiredMixin, ListView):
     model = CustomUser
-    template_name = 'funding/admin/donors.html'
+    template_name = 'admin_dashboard/donors.html'
     context_object_name = 'donors'
     paginate_by = 20
 
@@ -103,7 +103,7 @@ class AdminDonorsListView(StaffRequiredMixin, ListView):
 
 
 class AdminDashboardView(StaffRequiredMixin, TemplateView):
-    template_name = 'funding/admin/dashboard.html'
+    template_name = 'admin_dashboard/dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -117,7 +117,7 @@ class AdminDashboardView(StaffRequiredMixin, TemplateView):
 
 class AdminCampaignQueueListView(StaffRequiredMixin, ListView):
     model = Campaign
-    template_name = 'funding/admin/campaign_queue.html'
+    template_name = 'admin_dashboard/campaign_queue.html'
     context_object_name = 'pending_campaigns'
     paginate_by = 10
 
@@ -133,7 +133,7 @@ class AdminCampaignQueueListView(StaffRequiredMixin, ListView):
 class AdminCampaignReviewView(StaffRequiredMixin, UpdateView):
     model = Campaign
     form_class = CampaignAdminReviewForm
-    template_name = 'funding/admin/campaign_review.html'
+    template_name = 'admin_dashboard/campaign_review.html'
     context_object_name = 'campaign'
     success_url = reverse_lazy('core_admin:admin_campaign_queue')
 
@@ -210,7 +210,7 @@ class AdminToggleOrganisationActiveView(StaffRequiredMixin, View):
 
 class AdminOrganisationDeleteView(StaffRequiredMixin, DeleteView):
     model = Organisation
-    template_name = 'funding/admin/organisation_confirm_delete.html'
+    template_name = 'admin_dashboard/organisation_confirm_delete.html'
     success_url = reverse_lazy('core_admin:admin_organisations')
 
     def form_valid(self, form):

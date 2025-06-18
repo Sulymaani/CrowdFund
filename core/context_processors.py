@@ -1,3 +1,5 @@
+from utils.constants import UserRoles
+
 def impersonation_status(request):
     """Adds impersonation status to the template context."""
     return {
@@ -29,3 +31,35 @@ def debug_post_auth_processor(request):
         'debug_post_auth_ran': True,
         'user_from_post_auth_debug': user_obj
     }
+
+
+def user_role_context(request):
+    """
+    Adds user role-specific context variables to all templates.
+    This centralizes role checks that would otherwise be scattered throughout templates and views.
+    """
+    context = {
+        'is_authenticated': False,
+        'is_donor': False,
+        'is_org_owner': False,
+        'is_admin': False,
+        'user_role': None
+    }
+    
+    user = request.user
+    
+    if not hasattr(user, 'is_authenticated') or not user.is_authenticated:
+        return context
+    
+    context['is_authenticated'] = True
+    
+    # If user has a role attribute, add role-specific flags
+    if hasattr(user, 'role'):
+        context['user_role'] = user.role
+        context['is_donor'] = (user.role == UserRoles.DONOR)
+        context['is_org_owner'] = (user.role == UserRoles.ORG_OWNER)
+        context['is_admin'] = (user.role == UserRoles.ADMIN or user.is_staff)
+    elif hasattr(user, 'is_staff') and user.is_staff:
+        context['is_admin'] = True
+    
+    return context

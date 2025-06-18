@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}All Tags{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Browse Tags</h1>
+    
+    {% if tags %}
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {% for tag in tags %}
+                <a href="{% url 'tags:detail' tag.slug %}" class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition-shadow">
+                    <h2 class="text-xl font-semibold text-blue-600">{{ tag.name }}</h2>
+                    {% if tag.description %}
+                        <p class="text-gray-600 mt-2">{{ tag.description|truncatechars:100 }}</p>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="bg-gray-100 rounded-lg p-6 text-center">
+            <p class="text-gray-600">No tags have been created yet.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

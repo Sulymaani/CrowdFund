@@ -40,7 +40,7 @@ class DashboardAccessTest(TestCase):
         
         response = self.client.get(self.donor_dashboard_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'funding/donor_dashboard.html')
+        self.assertTemplateUsed(response, 'donor/dashboard.html')
 
         response = self.client.get(self.org_dashboard_url)
         self.assertEqual(response.status_code, 403) # Forbidden
@@ -54,7 +54,7 @@ class DashboardAccessTest(TestCase):
 
         response = self.client.get(self.org_dashboard_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'funding/org_dashboard.html')
+        self.assertTemplateUsed(response, 'org/dashboard.html')
 
         response = self.client.get(self.donor_dashboard_url)
         self.assertEqual(response.status_code, 403)
@@ -68,7 +68,7 @@ class DashboardAccessTest(TestCase):
 
         response = self.client.get(self.admin_dashboard_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'funding/admin/dashboard.html')
+        self.assertTemplateUsed(response, 'admin_dashboard/dashboard.html')
 
         # Staff/Admins are not donors or org owners, so they should be blocked
         response = self.client.get(self.donor_dashboard_url)

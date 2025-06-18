@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Browse Campaigns | CrowdFund{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Browse Campaigns</h1>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="bg-white p-4 rounded-lg shadow mb-6">
+        <form method="get" class="flex flex-wrap gap-4">
+            <div class="flex-1">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Tags:</label>
+                <div class="flex flex-wrap gap-2">
+                    {% for tag in all_tags %}
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="tags" value="{{ tag.slug }}" 
+                            {% if tag.slug in selected_tags %}checked{% endif %}
+                            class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                        <span class="ml-2">{{ tag.name }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
+                    Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Campaigns Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for campaign in campaigns %}
+            {% include "components/campaign_card.html" with campaign=campaign %}
+        {% empty %}
+            <div class="col-span-full text-center py-12">
+                <div class="text-gray-500">
+                    <svg class="w-16 h-16 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-xl">No campaigns found matching your filters.</p>
+                    <p class="mt-2">Try adjusting your filters or check back later.</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="my-8 flex justify-center">
+        <nav class="inline-flex rounded-md shadow">
+            {% if page_obj.has_previous %}
+            <a href="?page=1{% if request.GET.tags %}&tags={{ request.GET.tags }}{% endif %}" class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-l-md bg-white hover:bg-gray-50">First</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.tags %}&tags={{ request.GET.tags }}{% endif %}" class="px-4 py-2 border-t border-b border-r border-gray-300 text-sm font-medium bg-white hover:bg-gray-50">Previous</a>
+            {% endif %}
+            
+            <span class="px-4 py-2 border-t border-b border-gray-300 text-sm font-medium bg-gray-100">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.tags %}&tags={{ request.GET.tags }}{% endif %}" class="px-4 py-2 border-t border-b border-r border-gray-300 text-sm font-medium bg-white hover:bg-gray-50">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.tags %}&tags={{ request.GET.tags }}{% endif %}" class="px-4 py-2 border-t border-b border-r border-gray-300 text-sm font-medium rounded-r-md bg-white hover:bg-gray-50">Last</a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

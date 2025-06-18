@@ -1,0 +1,35 @@
+<!-- Overhauled donor footer component for landing and public pages -->
+<footer class="bg-gradient-to-r from-blue-50 to-indigo-100 border-t border-indigo-100 mt-12 py-10">
+    <div class="container mx-auto flex flex-col items-center justify-center">
+        <div class="flex items-center mb-4">
+            <svg class="w-8 h-8 text-indigo-600" fill="currentColor" viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd"
+                    d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                    clip-rule="evenodd"></path>
+            </svg>
+            <span class="ml-2 text-xl font-bold text-gray-800">CrowdFund</span>
+        </div>
+        <div class="flex space-x-6 mb-4">
+            <a href="/" class="text-gray-600 hover:text-indigo-600 transition-colors">Home</a>
+            <a href="{% url 'accounts:login' %}" class="text-gray-600 hover:text-indigo-600 transition-colors">Login</a>
+            <a href="{% url 'accounts:register_donor' %}"
+                class="text-gray-600 hover:text-indigo-600 transition-colors">Sign Up</a>
+            <a href="mailto:support@crowdfund.com"
+                class="text-gray-600 hover:text-indigo-600 transition-colors">Contact</a>
+        </div>
+        <div class="flex space-x-4 mb-4">
+            <a href="#" class="text-indigo-500 hover:text-indigo-700"><i class="fab fa-twitter fa-lg"></i></a>
+            <a href="#" class="text-indigo-500 hover:text-indigo-700"><i class="fab fa-facebook fa-lg"></i></a>
+            <a href="#" class="text-indigo-500 hover:text-indigo-700"><i class="fab fa-instagram fa-lg"></i></a>
+        </div>
+        <div class="text-gray-400 text-sm mb-2">
+            &copy; {% now "Y" %} CrowdFund. All rights reserved.
+        </div>
+        <div class="flex space-x-4 text-xs text-gray-400">
+            <a href="#" class="hover:text-indigo-600">Terms of Service</a>
+            <a href="#" class="hover:text-indigo-600">Privacy Policy</a>
+            <a href="#" class="hover:text-indigo-600">Cookie Policy</a>
+        </div>
+    </div>
+</footer>

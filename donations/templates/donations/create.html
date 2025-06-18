@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Make a Donation{% endblock %}
+
+{% block extra_head %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(function(bar) {
+      const progress = bar.getAttribute('data-progress');
+      bar.style.width = progress + '%';
+    });
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container max-w-3xl mx-auto py-8 px-4">
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Donate to {{ campaign.title }}</h1>
+            <p class="text-gray-600 mt-2">Your support will make a difference</p>
+        </div>
+
+        {% if campaign.cover_image %}
+            <div class="flex justify-center mb-6">
+                <img src="{{ campaign.cover_image.url }}" alt="{{ campaign.title }}" class="rounded-lg h-48 object-cover">
+            </div>
+        {% endif %}
+        
+        <div class="mb-8">
+            <div class="flex justify-between mb-2">
+                <span class="text-gray-700 font-medium">Campaign Progress</span>
+                <span class="text-blue-600 font-medium">{{ campaign.percentage_funded }}% Funded</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                <div class="bg-blue-600 h-2.5 rounded-full progress-bar" data-progress="{{ campaign.percentage_funded|default:0 }}"></div>
+            </div>
+            <div class="flex justify-between mt-2">
+                <span class="text-sm text-gray-500">Raised: ${{ campaign.amount_raised }}</span>
+                <span class="text-sm text-gray-500">Goal: ${{ campaign.funding_goal }}</span>
+            </div>
+        </div>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div>
+                <label for="{{ form.amount.id_for_label }}" class="block text-gray-700 font-medium mb-2">Donation Amount ($)</label>
+                {{ form.amount.errors }}
+                <div class="relative rounded-md shadow-sm">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span class="text-gray-500 sm:text-sm">$</span>
+                    </div>
+                    <input type="number" name="{{ form.amount.name }}" id="{{ form.amount.id_for_label }}" 
+                           class="block w-full pl-7 pr-12 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="0.00" step="0.01" min="1" required
+                           {% if form.amount.value %}value="{{ form.amount.value }}"{% endif %}>
+                </div>
+                {% if form.amount.help_text %}
+                    <p class="mt-1 text-sm text-gray-500">{{ form.amount.help_text }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label for="{{ form.message.id_for_label }}" class="block text-gray-700 font-medium mb-2">Message (Optional)</label>
+                {{ form.message.errors }}
+                <textarea name="{{ form.message.name }}" id="{{ form.message.id_for_label }}"
+                          class="block w-full py-2 px-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                          rows="4" placeholder="Add a personal message to accompany your donation">{{ form.message.value|default:'' }}</textarea>
+                {% if form.message.help_text %}
+                    <p class="mt-1 text-sm text-gray-500">{{ form.message.help_text }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" name="{{ form.anonymous.name }}" id="{{ form.anonymous.id_for_label }}" 
+                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                           {% if form.anonymous.value %}checked{% endif %}>
+                    <span class="text-gray-700">Make this donation anonymous</span>
+                </label>
+                {% if form.anonymous.help_text %}
+                    <p class="mt-1 text-sm text-gray-500">{{ form.anonymous.help_text }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="pt-4 border-t border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Payment Information</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <!-- This is just a mockup since we're not implementing actual payment processing -->
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">Card Number</label>
+                        <input type="text" class="block w-full py-2 px-3 border border-gray-300 rounded-md" placeholder="**** **** **** ****" disabled>
+                        <p class="mt-1 text-xs text-gray-500">Demo mode - no actual payment processed</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">Expiry</label>
+                            <input type="text" class="block w-full py-2 px-3 border border-gray-300 rounded-md" placeholder="MM/YY" disabled>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-2">CVV</label>
+                            <input type="text" class="block w-full py-2 px-3 border border-gray-300 rounded-md" placeholder="***" disabled>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center">
+                <input type="checkbox" id="agree_terms" required class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <label for="agree_terms" class="ml-2 block text-sm text-gray-700">
+                    I agree to the <a href="#" class="text-blue-600 hover:underline">terms and conditions</a>
+                </label>
+            </div>
+            
+            <div class="flex items-center justify-between pt-6">
+                <a href="{% url 'campaigns:detail' campaign.id %}" class="text-blue-600 hover:underline">
+                    Back to Campaign
+                </a>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md transition duration-200">
+                    Complete Donation
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="mt-8 bg-blue-50 rounded-lg p-4 text-center">
+        <p class="text-blue-800">
+            <i class="fas fa-lock mr-2"></i>
+            Your donation is secure and encrypted. We never store your full credit card details.
+        </p>
+    </div>
+</div>
+{% endblock %}

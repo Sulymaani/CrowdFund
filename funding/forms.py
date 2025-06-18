@@ -63,7 +63,7 @@ class CampaignForm(forms.ModelForm):
     
     class Meta:
         model = Campaign
-        fields = ['title', 'description', 'cover_image', 'goal', 'tags']
+        fields = ['title', 'description', 'cover_image', 'funding_goal', 'tags']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'block w-full px-4 py-2 mt-2 text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'

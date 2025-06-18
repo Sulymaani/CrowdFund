@@ -1,0 +1,21 @@
+{% extends "base_structure.html" %}
+{% load static %}
+
+{% block meta_description %}CrowdFund - Organization Dashboard and Campaign Management{% endblock %}
+{% block meta_keywords %}organization, campaigns, fundraising, management{% endblock %}
+
+{% block body_class %}organization-interface{% endblock %}
+
+{% block navbar %}
+    {% include "organizations/org_header.html" %}
+{% endblock %}
+
+{% block base_css %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'css/organization.css' %}">
+{% endblock %}
+
+{% block base_js %}
+    {{ block.super }}
+    <script src="{% static 'js/organization.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends 'base_org.html' %}
+{% load static %}
+
+{% block title %}Create Campaign - CrowdFund{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/campaign-form.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold">Create New Campaign</h1>
+        <p class="text-gray-600">Get started with your fundraising campaign</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-lg p-8">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+            
+            <!-- Title -->
+            <div>
+                <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Campaign Title *
+                </label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.title.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Description -->
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Campaign Description *
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.description.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Goal -->
+            <div>
+                <label for="{{ form.goal.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Funding Goal (USD) *
+                </label>
+                {{ form.goal }}
+                {% if form.goal.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.goal.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- End Date -->
+            <div>
+                <label for="{{ form.end_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    End Date
+                </label>
+                {{ form.end_date }}
+                {% if form.end_date.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.end_date.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Cover Image -->
+            <div>
+                <label for="{{ form.cover_image.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Cover Image
+                </label>
+                {{ form.cover_image }}
+                {% if form.cover_image.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.cover_image.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="flex justify-between pt-6">
+                <a href="{% url 'organizations:dashboard' %}" class="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit" class="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                    Create Campaign
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/campaign-form.js' %}"></script>
+{% endblock %}

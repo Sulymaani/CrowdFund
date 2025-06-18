@@ -1,5 +1,12 @@
 from django.shortcuts import redirect
 from django.urls import reverse, resolve, Resolver404
+from django.contrib.auth import logout
+import time
+import logging
+
+# Global variable to track server start time
+SERVER_START_TIME = time.time()
+logger = logging.getLogger(__name__)
 
 # Forcing a reload to fix stale code issue.
 class AuthRequiredMiddleware:
@@ -45,3 +52,40 @@ class AuthRequiredMiddleware:
 
         # If the user is not authenticated and the URL is not exempt, redirect to the landing page.
         return redirect('home')
+
+
+class ServerRestartMiddleware:
+    """
+    Middleware to detect server restarts and clear user sessions.
+    
+    This middleware stores the server start time in the user's session.
+    If the stored start time doesn't match the current server start time,
+    it means the server has been restarted since the user's last request.
+    In that case, it logs the user out for security and UX consistency.
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        logger.info(f"Server started at: {SERVER_START_TIME}")
+    
+    def __call__(self, request):
+        # Process the request first
+        response = self.get_response(request)
+        
+        # After request processing, handle the server restart check
+        # This ensures login flows complete before we check timestamps
+        if request.user.is_authenticated:
+            # Store the current server time for new sessions
+            current_time = request.session.get('server_start_time')
+            
+            if not current_time:
+                # New session, just set the time
+                request.session['server_start_time'] = SERVER_START_TIME
+            elif float(current_time) != SERVER_START_TIME:
+                # Server restart detected for existing session
+                logger.info(f"Server restart detected for user {request.user.username}. Logging out.")
+                logout(request)
+                # Redirect to home page after logout
+                return redirect('home')
+        
+        return response

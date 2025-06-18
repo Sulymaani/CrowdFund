@@ -1,0 +1,96 @@
+{% comment %}
+Completely rewritten campaign card component that avoids circular references
+This version uses only primitive template operations and simple variable access
+{% endcomment %}
+
+<div class="bg-white p-6 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-200 h-full flex flex-col">
+    {% if campaign.cover_image %}
+        <div class="mb-4 h-48 overflow-hidden rounded-md">
+            <img src="{{ campaign.cover_image.url }}" alt="{{ campaign.title }}" class="w-full h-full object-cover">
+        </div>
+    {% endif %}
+    
+    {# Status Badge - Simple implementation #}
+    <div class="mb-3">
+        {% if campaign.status == 'pending' %}
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+            <span class="h-2 w-2 rounded-full bg-yellow-500 mr-1"></span>
+            Pending Review
+        </span>
+        {% elif campaign.status == 'active' %}
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+            <span class="h-2 w-2 rounded-full bg-green-500 mr-1"></span>
+            Active
+        </span>
+        {% elif campaign.status == 'closed' %}
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+            <span class="h-2 w-2 rounded-full bg-gray-500 mr-1"></span>
+            Closed
+        </span>
+        {% elif campaign.status == 'rejected' %}
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-red-100 text-red-800 border border-red-200">
+            <span class="h-2 w-2 rounded-full bg-red-500 mr-1"></span>
+            Rejected
+        </span>
+        {% endif %}
+    </div>
+    
+    {# Campaign Title and Description #}
+    <div class="mb-4 flex-grow">
+        <h3 class="text-xl font-bold text-gray-800 mb-2">
+            {# Using pk directly to avoid potential circular reference #}
+            <a href="{% url 'campaigns:detail' pk=campaign.pk %}" class="hover:text-blue-600 transition-colors">
+                {{ campaign.title|default:"Campaign" }}
+            </a>
+        </h3>
+        <p class="text-gray-700 mb-2 line-clamp-3">
+            {{ campaign.description|default:""|truncatechars:120 }}
+        </p>
+    </div>
+    
+    {# Financial Information #}
+    <div class="mb-3">
+        <p class="text-gray-700"><strong>Goal:</strong> ${{ campaign.goal|default:"0.00" }}</p>
+        {% if campaign.raised_amount %}
+            <p class="text-gray-700"><strong>Raised:</strong> ${{ campaign.raised_amount|default:"0.00" }}</p>
+        {% endif %}
+    </div>
+    
+    {# Progress Bar - Direct calculation without with statement to avoid context nesting #}
+    {% if campaign.goal and campaign.raised_amount %}
+        {% if campaign.progress_percentage %}
+            {% with progress=campaign.progress_percentage %}
+            <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden mb-2 relative">
+                <div class="absolute top-0 left-0 h-2.5 bg-green-500 rounded-full transition-all duration-500" 
+                     style="width: {% if progress > 100 %}100{% else %}{{ progress }}{% endif %}%;">
+                </div>
+            </div>
+            <p class="text-xs text-gray-600 mb-3 text-right">{{ progress }}% of goal reached</p>
+            {% endwith %}
+        {% endif %}
+    {% endif %}
+    
+    {# Campaign Tags - Simple implementation #}
+    {% if campaign.tags.all %}
+    <div class="mt-3 mb-3">
+        <div class="flex flex-wrap gap-1">
+            {% for tag in campaign.tags.all %}
+                <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800">
+                    <span class="mr-1">#</span>{{ tag.name|default:"" }}
+                </span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    {# Footer #}
+    <div class="flex justify-between items-center mt-auto pt-3 border-t border-gray-100">
+        <p class="text-gray-500 text-sm">Created: {{ campaign.created_at|date:"d M Y"|default:"" }}</p>
+        <a href="{% url 'campaigns:detail' pk=campaign.pk %}" class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
+            View Details
+            <svg class="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+            </svg>
+        </a>
+    </div>
+</div>

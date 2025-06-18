@@ -2,7 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.conf import settings
 import os
-from funding.models import Organisation # Ensure funding.models is available
+from organizations.models import Organisation # Import from modularized organizations app
 from core.validators import FileSizeValidator, ImageDimensionsValidator, ImageFormatValidator
 
 def user_profile_path(instance, filename):
@@ -29,10 +29,11 @@ class CustomUser(AbstractUser):
         help_text='Profile picture (max 512x512px, 1MB, formats: JPEG, PNG)'
     )
     organisation = models.ForeignKey(
-        Organisation, 
+        'organizations.Organisation', 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True, 
+        related_name='users',
         help_text='The organisation this user owns or manages, if applicable.'
     )
 

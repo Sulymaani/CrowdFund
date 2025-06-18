@@ -1,5 +1,5 @@
 from django.shortcuts import redirect, get_object_or_404, render
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.db.models import Sum, Value, F, Q
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
@@ -18,7 +18,7 @@ from .forms import CampaignForm, DonationForm, OrganisationSettingsForm
 
 class CampaignListView(ListView):
     model = Campaign
-    template_name = 'funding/campaign_list.html'
+    template_name = 'campaign/list.html'
     context_object_name = 'campaigns'
 
     def get_queryset(self):
@@ -89,7 +89,7 @@ class CampaignDetailView(DetailView):
             return org_campaigns
         else:
             # Others only see active campaigns
-            return Campaign.objects.filter(status='active')
+            return Organisation.objects.filter(is_active=True).order_by('name')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -113,6 +113,13 @@ class CampaignDetailView(DetailView):
         user = self.request.user
         if user.is_authenticated and hasattr(user, 'role') and user.role == 'donor':
             context['donation_form'] = DonationForm()
+            
+        # Set up breadcrumbs
+        context['home_url'] = reverse_lazy('home')
+        context['breadcrumbs'] = [
+            {'title': 'Campaigns', 'url': reverse_lazy('funding:campaign_list')},
+            {'title': campaign.title[:30] + ('...' if len(campaign.title) > 30 else ''), 'url': ''}
+        ]
             
         return context
 
@@ -142,7 +149,7 @@ class CreateDonationView(LoginRequiredMixin, DonorRequiredMixin, View):
 class CampaignCreateView(OrganisationOwnerRequiredMixin, CreateView):
     model = Campaign
     form_class = CampaignForm
-    template_name = 'funding/campaign_form.html'
+    template_name = 'shared/campaign_form.html'
     success_url = reverse_lazy('org:dashboard')
     
     def dispatch(self, request, *args, **kwargs):
@@ -203,7 +210,7 @@ class CampaignCreateView(OrganisationOwnerRequiredMixin, CreateView):
 
 class OrganisationListView(ListView):
     model = Organisation
-    template_name = 'funding/organisation_list.html'
+    template_name = 'org/list.html'
     context_object_name = 'organisations'
     paginate_by = 12
 
@@ -213,24 +220,45 @@ class OrganisationListView(ListView):
         return context
 
 
-# --- Dashboards ---
+# --- Dashboards & Donor Views---
 
 class DonorDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    template_name = 'funding/donor_dashboard.html'
+    template_name = 'donor/dashboard.html'
 
     def test_func(self):
         return self.request.user.role == 'donor'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        user = self.request.user
+        
+        # Set page title
         context['page_title'] = 'My Donations'
-        context['donations'] = Donation.objects.filter(user=self.request.user).order_by('-created_at')
+        
+        # Get all donations for this donor
+        donations = Donation.objects.filter(donor=user).order_by('-created_at')
+        context['donations'] = donations
+        
+        # Calculate summary metrics
+        context['total_donated'] = donations.aggregate(Sum('amount'))['amount__sum'] or 0
+        context['campaigns_supported'] = donations.values('campaign').distinct().count()
+        
+        # Get last donation date
+        if donations.exists():
+            context['last_donation_date'] = donations.first().created_at.strftime('%d %b %Y')
+        
+        # Set up breadcrumbs
+        context['home_url'] = reverse('home')
+        context['breadcrumbs'] = [
+            {'title': 'My Donations', 'url': ''},
+        ]
+        
         return context
 
 
 class OrgCampaignsListView(OrganisationOwnerRequiredMixin, ListView):
     model = Campaign
-    template_name = 'funding/org_campaigns.html'
+    template_name = 'org/campaigns.html'
     context_object_name = 'campaigns'
     
     def get_queryset(self):
@@ -276,7 +304,7 @@ class OrgCampaignsListView(OrganisationOwnerRequiredMixin, ListView):
 
 
 class OrgDashboardView(OrganisationOwnerRequiredMixin, TemplateView):
-    template_name = 'funding/org_dashboard.html'
+    template_name = 'org/dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -288,7 +316,7 @@ class OrgDashboardView(OrganisationOwnerRequiredMixin, TemplateView):
         # KPI Calculations
         total_raised = Donation.objects.filter(campaign__organisation=org).aggregate(Sum('amount'))['amount__sum'] or 0
         active_campaigns = Campaign.objects.filter(organisation=org, status='active').count()
-        total_donors = Donation.objects.filter(campaign__organisation=org).values('user').distinct().count()
+        total_donors = Donation.objects.filter(campaign__organisation=org).values('donor').distinct().count()
         campaigns_pending = Campaign.objects.filter(organisation=org, status='pending').count()
         
         # Get the number of new donors this month
@@ -296,7 +324,7 @@ class OrgDashboardView(OrganisationOwnerRequiredMixin, TemplateView):
         new_donors_this_month = Donation.objects.filter(
             campaign__organisation=org,
             created_at__gte=first_day_of_month
-        ).values('user').distinct().count()
+        ).values('donor').distinct().count()
 
         # Sample trend data for sparklines (if no real data available)
         def generate_trend_data(length=12, growth_factor=1.2):
@@ -482,7 +510,7 @@ class OrgDashboardView(OrganisationOwnerRequiredMixin, TemplateView):
 class CampaignEditView(OrganisationOwnerRequiredMixin, UpdateView):
     model = Campaign
     form_class = CampaignForm
-    template_name = 'funding/campaign_form.html'
+    template_name = 'shared/campaign_form.html'
     
     def get_queryset(self):
         # Allow editing of any campaign belonging to this organization for now
@@ -683,7 +711,7 @@ class CampaignDeleteView(OrganisationOwnerRequiredMixin, View):
 
 
 class DonationsListView(OrganisationOwnerRequiredMixin, ListView):
-    template_name = 'funding/donations_list.html'
+    template_name = 'donation/list.html'
     context_object_name = 'donations'
     paginate_by = 25
     
@@ -720,7 +748,7 @@ class DonationsListView(OrganisationOwnerRequiredMixin, ListView):
 class OrgCampaignDetailView(OrganisationOwnerRequiredMixin, DetailView):
     model = Campaign
     context_object_name = 'campaign'
-    template_name = 'funding/campaign_active.html'  # Default template
+    template_name = 'campaign/active.html'  # Default template
     
     def get_queryset(self):
         # Only allow org owners to see their own campaigns
@@ -772,13 +800,13 @@ class OrgCampaignDetailView(OrganisationOwnerRequiredMixin, DetailView):
 class DonationDetailView(LoginRequiredMixin, DetailView):
     model = Donation
     context_object_name = 'donation'
-    template_name = 'funding/donation_detail.html'
+    template_name = 'donation/detail.html'
     
     def get_queryset(self):
         user = self.request.user
         if user.role == 'donor':
             # Donors can only see their own donations
-            return Donation.objects.filter(user=user)
+            return Donation.objects.filter(donor=user)
         else:
             # Admins can see all donations, org_owners handled by OrgDonationDetailView
             return Donation.objects.all() if user.is_staff else Donation.objects.none()
@@ -792,7 +820,7 @@ class DonationDetailView(LoginRequiredMixin, DetailView):
 class OrgDonationDetailView(OrganisationOwnerRequiredMixin, DetailView):
     model = Donation
     context_object_name = 'donation'
-    template_name = 'funding/org_donation_detail.html'
+    template_name = 'org/donation_detail.html'
     slug_field = 'reference_number'
     slug_url_kwarg = 'reference_number'
     
@@ -845,7 +873,7 @@ class ExportDonationsCSVView(OrganisationOwnerRequiredMixin, View):
 
 
 class OrganisationSettingsView(OrganisationOwnerRequiredMixin, View):
-    template_name = 'funding/org_settings.html'
+    template_name = 'org/settings.html'
     
     def get(self, request, *args, **kwargs):
         organisation = request.user.organisation
@@ -881,3 +909,76 @@ class OrganisationSettingsView(OrganisationOwnerRequiredMixin, View):
             'page_title': 'Organisation Settings',
             'organisation': organisation
         })
+
+
+# --- Donor-specific views ---
+
+class DonorCampaignsView(LoginRequiredMixin, DonorRequiredMixin, ListView):
+    model = Campaign
+    template_name = 'donor/campaigns.html'
+    context_object_name = 'campaigns'
+    paginate_by = 12
+    
+    def get_queryset(self):
+        return Campaign.objects.filter(status='active').order_by('-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Browse Campaigns'
+        
+        # Get all tags for the filter UI
+        from .models import Tag
+        context['all_tags'] = Tag.objects.all().order_by('name')
+        
+        # Get selected tags for the template
+        context['selected_tags'] = self.request.GET.getlist('tags')
+        
+        return context
+
+
+class DonorOrganizationsView(LoginRequiredMixin, DonorRequiredMixin, ListView):
+    model = Organisation
+    template_name = 'donor/organizations.html'
+    context_object_name = 'organizations'
+    paginate_by = 12
+    
+    def get_queryset(self):
+        return Organisation.objects.filter(status='active').order_by('name')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Browse Organizations'
+        return context
+
+
+class DonorDonationDetailView(LoginRequiredMixin, DonorRequiredMixin, DetailView):
+    model = Donation
+    context_object_name = 'donation'
+    template_name = 'donor/donation_detail.html'
+    slug_field = 'reference_number'
+    slug_url_kwarg = 'reference_number'
+    
+    def get_queryset(self):
+        # Donors can only view their own donations
+        return Donation.objects.filter(donor=self.request.user)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = f'Donation Details'
+        return context
+
+
+class DonorProfileView(LoginRequiredMixin, DonorRequiredMixin, TemplateView):
+    template_name = 'donor/profile.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'My Profile'
+        context['user_profile'] = self.request.user
+        
+        # Get donation statistics
+        user_donations = Donation.objects.filter(donor=self.request.user)
+        context['donation_count'] = user_donations.count()
+        context['total_donated'] = user_donations.aggregate(total=Sum('amount'))['total'] or 0
+        
+        return context

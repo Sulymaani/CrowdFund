@@ -1,0 +1,84 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('CrowdFund Admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        <img src="{% static 'images/crowdfund-logo.png' %}" alt="CrowdFund Logo" height="40" style="margin-right: 10px;">
+        {{ site_header|default:_('CrowdFund Administration') }}
+    </a>
+</h1>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    :root {
+        --primary: #1a3c6e;
+        --secondary: #2c5ba0;
+        --accent: #3e7dd4;
+        --primary-fg: #fff;
+        --body-fg: #333;
+        --body-bg: #fff;
+        --header-color: #fff;
+        --header-branding-color: var(--accent);
+        --header-bg: var(--primary);
+        --header-link-color: #eee;
+    }
+    
+    /* Logo and branding */
+    #header {
+        background: var(--primary);
+        color: var(--header-color);
+    }
+    
+    #branding h1 {
+        padding: 0;
+        margin: 0 20px;
+        font-weight: 300;
+        font-size: 24px;
+        color: var(--header-branding-color);
+    }
+    
+    #branding h1, #branding h1 a:link, #branding h1 a:visited {
+        color: var(--header-color);
+    }
+    
+    /* Button styles */
+    .button, input[type=submit], input[type=button], .submit-row input, a.button {
+        background: var(--primary);
+        padding: 8px 15px;
+        border: none;
+        border-radius: 4px;
+        color: var(--primary-fg);
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    
+    .button:active, input[type=submit]:active, input[type=button]:active,
+    .button:focus, input[type=submit]:focus, input[type=button]:focus,
+    .button:hover, input[type=submit]:hover, input[type=button]:hover {
+        background: var(--secondary);
+    }
+    
+    .button.default, input[type=submit].default, .submit-row input.default {
+        background: var(--accent);
+    }
+    
+    .button.default:active, input[type=submit].default:active,
+    .button.default:focus, input[type=submit].default:focus,
+    .button.default:hover, input[type=submit].default:hover {
+        background: var(--secondary);
+        opacity: 0.9;
+    }
+    
+    /* Module styles */
+    .module h2, .module caption, .inline-group h2 {
+        background: var(--primary);
+        color: var(--header-color);
+        font-weight: 500;
+    }
+</style>
+{% endblock %}

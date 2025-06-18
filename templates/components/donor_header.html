@@ -1,0 +1,114 @@
+<!-- Reusable donor header component -->
+<header class="bg-white shadow">
+    <div class="container mx-auto px-4 py-3">
+        <div class="flex items-center justify-between">
+            <!-- Logo and Site Name -->
+            <div class="flex items-center space-x-2">
+                <a href="{% url 'home' %}" class="flex items-center">
+                    <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="ml-2 text-xl font-bold text-gray-800">CrowdFund</span>
+                </a>
+            </div>
+            
+            <!-- Navigation Links - Desktop -->
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="{% url 'home' %}" class="text-gray-700 hover:text-blue-600 transition-colors py-2">Home</a>
+                <a href="{% url 'campaigns:list' %}" class="text-gray-700 hover:text-blue-600 transition-colors py-2">Campaigns</a>
+                <a href="{% url 'organizations:list' %}" class="text-gray-700 hover:text-blue-600 transition-colors py-2">Organizations</a>
+                {% if user.is_authenticated %}
+                    {% if user.role == 'donor' %}
+                        <a href="{% url 'donor:dashboard' %}" class="{% if request.path == '/donor/dashboard/' %}border-b-2 border-blue-600 text-blue-600 font-medium{% else %}text-gray-700 hover:text-blue-600{% endif %} transition-colors py-2">My Donations</a>
+                        <a href="{% url 'donor:campaigns' %}" class="{% if '/donor/campaigns/' in request.path %}border-b-2 border-blue-600 text-blue-600 font-medium{% else %}text-gray-700 hover:text-blue-600{% endif %} transition-colors py-2 ml-6">Browse Campaigns</a>
+                        <a href="{% url 'donor:organizations' %}" class="{% if '/donor/organizations/' in request.path %}border-b-2 border-blue-600 text-blue-600 font-medium{% else %}text-gray-700 hover:text-blue-600{% endif %} transition-colors py-2 ml-6">Organizations</a>
+                        <a href="{% url 'donor:profile' %}" class="{% if '/donor/profile/' in request.path %}border-b-2 border-blue-600 text-blue-600 font-medium{% else %}text-gray-700 hover:text-blue-600{% endif %} transition-colors py-2 ml-6">Profile</a>
+                    {% elif user.role == 'org_owner' %}
+                        <a href="{% url 'org:dashboard' %}" class="{% if '/org/' in request.path %}border-b-2 border-blue-600 text-blue-600 font-medium{% else %}text-gray-700 hover:text-blue-600{% endif %} transition-colors py-2">Organization Portal</a>
+                    {% elif user.is_staff %}
+                        <a href="{% url 'admin:index' %}" class="{% if '/admin/' in request.path %}border-b-2 border-blue-600 text-blue-600 font-medium{% else %}text-gray-700 hover:text-blue-600{% endif %} transition-colors py-2">Admin</a>
+                    {% endif %}
+                {% endif %}
+            </nav>
+            
+            <!-- User Menu -->
+            <div class="flex items-center space-x-4">
+                {% if user.is_authenticated %}
+                    <!-- Logout button - prominently displayed -->
+                    <a href="{% url 'accounts:logout' %}" class="text-red-600 hover:text-red-700 transition-colors py-2 mr-4 flex items-center">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        Logout
+                    </a>
+                    
+                    <div class="relative group">
+                        <button class="flex items-center text-gray-700 hover:text-blue-600 transition-colors py-2">
+                            {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" alt="{{ user.first_name }}" class="w-8 h-8 rounded-full object-cover">
+                            {% else %}
+                                <svg class="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                </svg>
+                            {% endif %}
+                            <span class="ml-2">{{ user.first_name|default:user.username }}</span>
+                            <svg class="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div class="absolute right-0 w-48 mt-2 py-2 bg-white rounded-lg shadow-xl hidden group-hover:block z-10">
+                            <a href="{% url 'accounts:login' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Profile</a>
+                            {% if user.role == 'donor' %}
+                                <a href="{% url 'donor:dashboard' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">My Donations</a>
+                            {% elif user.role == 'org_owner' %}
+                                <a href="{% url 'org:dashboard' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Organization Portal</a>
+                            {% endif %}
+                            <div class="border-t border-gray-200 my-1"></div>
+                            <a href="{% url 'accounts:logout' %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Logout</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{% url 'accounts:login' %}" class="text-gray-700 hover:text-blue-600 transition-colors">Login</a>
+                    <a href="{% url 'accounts:register_donor' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">Sign Up</a>
+                {% endif %}
+                
+                <!-- Mobile menu button -->
+                <button id="mobile-menu-button" class="md:hidden text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation Menu (Hidden by default) -->
+        <div id="mobile-menu" class="md:hidden hidden pt-4 pb-2 border-t border-gray-200 mt-3">
+            <a href="{% url 'home' %}" class="block py-2 text-gray-700 hover:text-blue-600 transition-colors">Home</a>
+            <a href="{% url 'campaigns:list' %}" class="block py-2 text-gray-700 hover:text-blue-600 transition-colors">Campaigns</a>
+            <a href="{% url 'organizations:list' %}" class="block py-2 text-gray-700 hover:text-blue-600 transition-colors">Organizations</a>
+            {% if user.is_authenticated %}
+                {% if user.role == 'donor' %}
+                    <a href="{% url 'donor:dashboard' %}" class="block py-2 text-gray-700 hover:text-blue-600 transition-colors">My Donations</a>
+                {% elif user.role == 'org_owner' %}
+                    <a href="{% url 'org:dashboard' %}" class="block py-2 text-gray-700 hover:text-blue-600 transition-colors">Organization Portal</a>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Mobile Menu Toggle Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+        });
+    </script>
+</header>

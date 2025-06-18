@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Donation Receipt #{{ donation.reference_number }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        body {
+            font-size: 12pt;
+        }
+        .container {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .receipt {
+            border: 1px solid #ddd;
+            padding: 20px;
+        }
+    }
+    
+    .receipt {
+        background-color: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .receipt-header {
+        border-bottom: 2px solid #f0f0f0;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+    }
+    
+    .receipt-footer {
+        border-top: 2px solid #f0f0f0;
+        margin-top: 20px;
+        padding-top: 20px;
+        font-size: 0.9em;
+    }
+    
+    .watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        font-size: 6em;
+        color: rgba(200, 200, 200, 0.15);
+        z-index: -1;
+        font-weight: bold;
+        text-transform: uppercase;
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="no-print mb-4">
+        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i> Back
+        </a>
+        <div class="float-end">
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="fas fa-print me-2"></i> Print Receipt
+            </button>
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-primary ms-2">
+                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+            </a>
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary ms-2">
+                <i class="fas fa-history me-2"></i> Donation History
+            </a>
+        </div>
+    </div>
+    
+    <div class="receipt position-relative">
+        <div class="watermark">Receipt</div>
+        
+        <div class="receipt-header d-flex justify-content-between align-items-start">
+            <div>
+                <h1 class="h3 mb-1">Donation Receipt</h1>
+                <p class="text-muted mb-0">{{ donation.campaign.organisation.name }}</p>
+                <p class="text-muted mb-0">Tax ID: {% if donation.campaign.organisation.tax_id %}{{ donation.campaign.organisation.tax_id }}{% else %}Pending{% endif %}</p>
+            </div>
+            <div class="text-end">
+                <h3 class="text-primary mb-0">${{ donation.amount|intcomma }}</h3>
+                <p class="text-muted mb-0">Reference: {{ donation.reference_number }}</p>
+                <p class="text-muted mb-0">Date: {{ donation.created_at|date:"F j, Y" }}</p>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h5>Donor Information</h5>
+                <p class="mb-1"><strong>Name:</strong> {{ donation.donor.get_full_name }}</p>
+                <p class="mb-1"><strong>Email:</strong> {{ donation.donor.email }}</p>
+                {% if donation.donor.phone_number %}
+                <p class="mb-1"><strong>Phone:</strong> {{ donation.donor.phone_number }}</p>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <h5>Campaign Information</h5>
+                <p class="mb-1"><strong>Campaign:</strong> {{ donation.campaign.title }}</p>
+                <p class="mb-1"><strong>Organization:</strong> {{ donation.campaign.organisation.name }}</p>
+                {% if donation.campaign.organisation.website %}
+                <p class="mb-1"><strong>Website:</strong> {{ donation.campaign.organisation.website }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-12">
+                <h5>Donation Details</h5>
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th style="width: 200px;">Amount</th>
+                            <td>${{ donation.amount|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <th>Reference Number</th>
+                            <td>{{ donation.reference_number }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date</th>
+                            <td>{{ donation.created_at|date:"F j, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Payment Method</th>
+                            <td>Credit Card</td>
+                        </tr>
+                        {% if donation.comment %}
+                        <tr>
+                            <th>Donor Comment</th>
+                            <td>{{ donation.comment }}</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="receipt-footer">
+            <div class="text-center mb-4">
+                <h5>Thank You For Your Support!</h5>
+                <p class="mb-0">Your contribution makes a difference. Keep this receipt for your tax records.</p>
+                {% if donation.campaign.status == 'active' %}
+                <div class="mt-3 no-print">
+                    <a href="{% url 'campaigns:detail' pk=donation.campaign.pk %}" class="btn btn-sm btn-success">
+                        <i class="fas fa-share me-1"></i> Share This Campaign
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <small class="text-muted">
+                        This receipt is automatically generated and valid without signature.
+                        {% if donation.campaign.organisation.contact_phone %}
+                        For questions, contact {{ donation.campaign.organisation.name }} at {{ donation.campaign.organisation.contact_phone }}.
+                        {% endif %}
+                    </small>
+                </div>
+                <div class="col-md-4 text-end">
+                    <small class="text-muted">
+                        Printed on: {{ current_date|date:"F j, Y" }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

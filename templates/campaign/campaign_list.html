@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Active Campaigns - CrowdFund{% endblock %}
+
+{% block content %}
+<!-- Breadcrumbs -->
+{% include 'components/breadcrumbs.html' with home_url=home_url home_title="Home" breadcrumbs=breadcrumbs %}
+
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2">Active Campaigns</h1>
+    <div class="h-1 w-24 bg-blue-600 mt-2 mb-4"></div>
+    <p class="text-gray-600">Browse our active fundraising campaigns and support a cause today.</p>
+</div>
+
+<!-- Tag Filter Section -->
+<div class="bg-gray-50 p-4 rounded-lg mb-6 shadow-sm">
+    <h2 class="text-lg font-medium text-gray-800 mb-2">Filter by Tags</h2>
+    <form method="get" action="" class="flex flex-wrap gap-2">
+        {% for tag in all_tags %}
+            <label class="inline-flex items-center bg-white px-3 py-1 rounded-full border {% if tag.slug in selected_tags %}border-blue-500 bg-blue-50{% else %}border-gray-300{% endif %} cursor-pointer hover:bg-blue-50 transition-colors">
+                <input type="checkbox" name="tags" value="{{ tag.slug }}" class="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out" {% if tag.slug in selected_tags %}checked{% endif %}>
+                <span class="ml-2 text-sm">{{ tag.name }}</span>
+            </label>
+        {% endfor %}
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-md text-sm transition-colors duration-200 ml-auto">Apply Filters</button>
+        {% if selected_tags %}
+            <a href="{% url 'campaigns:list' %}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-1 rounded-md text-sm transition-colors duration-200">Clear Filters</a>
+        {% endif %}
+    </form>
+</div>
+
+{% if campaigns %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for campaign in campaigns %}
+            {% include 'components/campaign_card.html' with campaign=campaign %}
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="bg-gray-50 p-8 rounded-lg border border-gray-200 text-center">
+        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+        </svg>
+        <p class="text-xl font-medium text-gray-700 mb-2">No active campaigns at the moment</p>
+        <p class="text-gray-600">Check back soon or contact us to start your own campaign!</p>
+    </div>
+{% endif %}
+
+{% endblock %}

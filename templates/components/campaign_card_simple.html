@@ -1,0 +1,21 @@
+<!-- Simplified campaign card component for testing -->
+<div class="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+    <!-- Basic campaign info only -->
+    <h3 class="text-xl font-bold text-gray-800 mb-2">{{ campaign.title }}</h3>
+    <p class="text-gray-700 mb-2">{{ campaign.description|truncatechars:120 }}</p>
+    
+    <!-- Status -->
+    <div class="mb-3">
+        <p>Status: {{ campaign.status }}</p>
+    </div>
+    
+    <!-- Basic financial info -->
+    <div class="mb-3">
+        <p class="text-gray-700"><strong>Goal:</strong> ${{ campaign.goal }}</p>
+    </div>
+    
+    <!-- Created date -->
+    <div class="mt-4 pt-3 border-t border-gray-100">
+        <p class="text-gray-500 text-sm">Created: {{ campaign.created_at|date:"d M Y" }}</p>
+    </div>
+</div>

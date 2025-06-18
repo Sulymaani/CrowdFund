@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}My Profile | CrowdFund{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">My Profile</h1>
+    </div>
+
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <!-- User Profile -->
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+            <div>
+                <h2 class="text-lg leading-6 font-medium text-gray-900">User Information</h2>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Personal details and account information.</p>
+            </div>
+            <a href="{% url 'accounts:edit_profile' %}" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">
+                Edit Profile
+            </a>
+        </div>
+        <div class="border-t border-gray-200">
+            <dl>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Full name</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ user_profile.get_full_name|default:"Not provided" }}</dd>
+                </div>
+                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Email address</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ user_profile.email }}</dd>
+                </div>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Username</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ user_profile.username }}</dd>
+                </div>
+                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Member since</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ user_profile.date_joined|date:"F j, Y" }}</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Donation Statistics -->
+    <div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+            <h2 class="text-lg leading-6 font-medium text-gray-900">Donation Statistics</h2>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Summary of your contributions.</p>
+        </div>
+        <div class="border-t border-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
+                <!-- Total Donations -->
+                <div class="bg-blue-50 p-6 rounded-lg shadow-sm">
+                    <h3 class="text-lg font-medium text-blue-800 mb-2">Total Donations</h3>
+                    <div class="flex items-baseline">
+                        <span class="text-2xl font-semibold text-blue-600">{{ donation_count }}</span>
+                        <span class="ml-1 text-sm text-blue-600">donations</span>
+                    </div>
+                </div>
+                <!-- Total Amount -->
+                <div class="bg-green-50 p-6 rounded-lg shadow-sm">
+                    <h3 class="text-lg font-medium text-green-800 mb-2">Total Amount Donated</h3>
+                    <div class="flex items-baseline">
+                        <span class="text-2xl font-semibold text-green-600">${{ total_donated|floatformat:2|intcomma }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="mt-8 flex flex-wrap gap-4">
+        <a href="{% url 'donor:dashboard' %}" class="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded shadow-md">
+            View My Donations
+        </a>
+        <a href="{% url 'donor:campaigns' %}" class="bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded shadow-md">
+            Browse More Campaigns
+        </a>
+        <a href="{% url 'logout' %}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-6 rounded shadow-md">
+            Sign Out
+        </a>
+    </div>
+</div>
+{% endblock %}

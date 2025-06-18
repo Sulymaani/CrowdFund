@@ -19,7 +19,6 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from core.views import HomeView
-from funding.views import DonorDashboardView, OrgDashboardView, OrganisationSettingsView
 
 handler404 = 'core.views.custom_page_not_found_view'
 handler403 = 'core.views.custom_permission_denied_view'
@@ -30,17 +29,21 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('accounts/', include('django.contrib.auth.urls')), # For password reset, etc.,
 
-    # Donor Dashboard
-    path('dashboard/donor/', DonorDashboardView.as_view(), name='donor_dashboard'),
+    # New modularized apps - primary URLs
+    path('campaigns/', include('campaigns.urls', namespace='campaigns')),
+    path('organizations/', include('organizations.urls', namespace='organizations')),
+    path('donations/', include('donations.urls', namespace='donations')),
+    path('tags/', include('tags.urls', namespace='tags')),
+    path('donor/', include('accounts.urls_donor', namespace='donor')),
     
-    # Organization URLs - consolidated under /org/ prefix
-    path('org/', include('funding.org_urls')),  # Organization-specific URLs from funding app
-
-    # Admin URLs
-    path('admin/', include('core.urls', namespace='core_admin')),
-
-    # Main app (campaigns, etc.) - for public/donor views
-    path('', include('funding.urls')),
+    # API endpoints
+    path('api/v1/', include('api.urls')),
+    
+    # Legacy URLs (for backward compatibility during transition)
+    path('donor/', include('funding.donor_urls', namespace='donor_legacy')),  # Legacy donor URLs
+    path('org/', include('funding.org_urls')),  # Legacy organization URLs
+    path('admin/', include('core.urls', namespace='core_admin')),  # Admin URLs
+    path('', include('funding.urls')),  # Legacy main app URLs
 ]
 
 # Serve media files during development

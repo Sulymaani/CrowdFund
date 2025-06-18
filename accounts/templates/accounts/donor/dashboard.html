@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Donor Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Dashboard Header -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h1 class="display-4">My Donations Dashboard</h1>
+            <p class="lead text-muted">Track your impact and manage your giving</p>
+        </div>
+    </div>
+    
+    <!-- Stats Overview -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted mb-2">Total Donated</h5>
+                    <div class="display-4 fw-bold text-primary">${{ total_donated|intcomma }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted mb-2">Donations Made</h5>
+                    <div class="display-4 fw-bold text-primary">{{ donation_count }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted mb-2">Organizations Supported</h5>
+                    <div class="display-4 fw-bold text-primary">{{ supported_orgs.count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Donations -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="h3 border-bottom pb-2 mb-4">Recent Donations</h2>
+            
+            {% if recent_donations %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Campaign</th>
+                                <th>Organization</th>
+                                <th>Amount</th>
+                                <th>Receipt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for donation in recent_donations %}
+                            <tr>
+                                <td>{{ donation.donation_date }}</td>
+                                <td>
+                                    <a href="{% url 'campaigns:detail' donation.campaign.slug %}" class="text-decoration-none fw-medium">
+                                        {{ donation.campaign.title }}
+                                    </a>
+                                </td>
+                                <td>{{ donation.campaign.organisation.name }}</td>
+                                <td class="fw-bold">${{ donation.amount|intcomma }}</td>
+                                <td>
+                                    <a href="{% url 'donations:receipt' donation.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-receipt me-1"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-end">
+                    <a href="{% url 'donations:donor_history' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-history me-1"></i> View All Donations
+                    </a>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <p class="mb-0">You haven't made any donations yet.</p>
+                </div>
+                <div class="text-center">
+                    <a href="{% url 'campaigns:list' %}" class="btn btn-primary">
+                        <i class="fas fa-hand-holding-heart me-1"></i> Browse Campaigns
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Supported Organizations -->
+    {% if supported_orgs %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="h3 border-bottom pb-2 mb-4">Organizations You've Supported</h2>
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                {% for org in supported_orgs %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        {% if org.logo %}
+                            <img src="{{ org.logo.url }}" class="card-img-top org-logo-small" alt="{{ org.name }}">
+                        {% else %}
+                            <div class="card-img-top bg-light p-3 text-center">
+                                <i class="fas fa-building fa-3x text-secondary"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ org.name }}</h5>
+                            <p class="card-text small">{{ org.mission|truncatewords:20 }}</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0">
+                            <a href="{% url 'organizations:detail' org.id %}" class="btn btn-sm btn-outline-primary">
+                                View Organization
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Suggested Campaigns -->
+    <div class="row">
+        <div class="col-12">
+            <h2 class="h3 border-bottom pb-2 mb-4">Recommended Campaigns</h2>
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                {% for campaign in recommended_campaigns|default:'' %}
+                    <!-- Campaign card markup would go here -->
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <p class="mb-0">We're preparing personalized recommendations for you.</p>
+                    </div>
+                    <div class="text-center">
+                        <a href="{% url 'campaigns:list' %}" class="btn btn-primary">
+                            Explore All Campaigns
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
